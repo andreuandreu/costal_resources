@@ -23,7 +23,14 @@ import matplotlib.ticker as ticker
 import pickle
 import cmath
 
-#def make_grid(n,m):
+
+'''
+Second instance of the code, 
+extends the previous consumption and production of resources to a NxM matrix 
+and plots the result in a dianamic movie showing the matrix as cells
+and plots a graph of all the sea resources consumed.
+'''
+#>python matrix_resources_costal_plain.py name_plot
 
 
 def land_grid(m,l):

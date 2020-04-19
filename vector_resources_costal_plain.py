@@ -24,13 +24,23 @@ import matplotlib.ticker as ticker
 import pickle
 import cmath
 
+'''
+Third instance of the code, 
+modifies the previous code to only deal with a vector of consumption instead of a matrix
+simplifyies the sea/land divided consumption of the previous "matrix" version.
+It also uses a different rutine of choosing where the the consumer will jump, 
+previously was random, now it selects the cells within a radius r around itself that have up to
+a 80% of the cell containing the maximum of resources, and jumps randomly to any of these cells. 
+It also modifies the ploting to only show a vector and consumers moving next to the cell they consumed
+'''
+#
 
 
 
 def land_vector(l):
     '''create land vector'''
     
-    land_vector= np.full(l, 0.9 )#cnt.max_land
+    land_vector= np.full(l, cnt.land_0 )#cnt.max_land
     
     #print('t_o land', land_vector)
     return land_vector
@@ -38,16 +48,16 @@ def land_vector(l):
 
 class constants:
 
-    land_0 = 2.5
-    land_productivity = 0.2
-    max_land = 5
-    sea_productivity = 0.9
-    consumption_rate = 1
-    L_threshold = 0.4
-    time = 30
-    length = 16
-    radius = 3
-    radius_vector = [-3,-2,-1,1,2,3]
+    land_0 = 1.1 #initial condition on land combustible.
+    land_productivity = 0.2 #rate of increase of combustible in a land cell per unit of time
+    max_land = 5 #maximum of land combustible resources per cell
+    sea_productivity = 0.9 #amount of maximum combustible avaliable on the sea in form of algae by unit of time 
+    consumption_rate = 1 #rate of consumtion, this has to be set to 1, everything is normalized by this
+    L_threshold = 0.4 #threshold below which the consumer does not consume more resources from that cell
+    time = 40 #time steps
+    length = 30 #length of the land area in cells
+    radius = 3 # maximum number of cells that the consumer can move in one jump
+    margin = 0.2  #margin of combustible abaliabbility from the cell with maximum combustible where the consumer can move into
 
 
 def time_steps():
@@ -62,25 +72,43 @@ def vector_jump(L, l):
 
 
     if  l > cnt.radius -1 and l + cnt.radius < cnt.length:
-        max_l = max(L[l-cnt.radius:l+cnt.radius])
-        aux = np.where(L[l-cnt.radius:l+cnt.radius] == max_l)
-        if len(aux[0] > 1):
+        max_l = max(L[l-cnt.radius:l+cnt.radius+1])
+        aux = np.where(L[l-cnt.radius:l+cnt.radius+1] > max_l - max_l*cnt.margin  )#or L = L[l]
+        if len(aux[0]) > 1:
             select = choice(aux[0])
+            #upordown = choice([-1,1]) 
+            #index =  aux[0] +l - cnt.radius #int()+upordown
+            #select = l - cnt.radius + aux[0][index]
             
+            #print('auxxxuxuxuux', aux[0])
+            #print('len',len(aux[0]), 'lll', l, '-+', upordown,'in', index , 'select', select, 'position', select +l - cnt.radius )
         else:
             select = aux[0]
-        print ('done', select, 'auauauau', aux[0] , l - cnt.radius)
-        #rand = choice(cnt.radius_vector)
-        #return aux[0][rand] +int(l/2) 
+            print ('lll', l, 'aux', aux)
         return select +l - cnt.radius #l + rand
 
     elif l <= cnt.radius:
-        aux = l + randint(0, cnt.radius)
-        return aux
+        max_l = max(L[0:l+cnt.radius])
+        aux = np.where(L[0:l+cnt.radius] > max_l - max_l*cnt.margin)
+        #aux = l + randint(0, cnt.radius)
+        if len(aux[0]) > 1:
+            upordown = choice([-1,1])
+            print ('juuuumpa', int((len(aux[0])-1)/2)+upordown)
+            select = aux[0][int((len(aux[0])-1)/2)+upordown]
+        else:
+            select = aux[0]
+        return select 
 
     else:
-        aux = l - randint(0, cnt.radius)
-        return aux
+        max_l = max(L[l-cnt.radius:cnt.length-1])
+        aux = np.where(L[l-cnt.radius:cnt.length-1] > max_l - max_l*cnt.margin)
+        #aux = l + randint(0, cnt.radius)
+        if len(aux[0]) > 1:
+            upordown = choice([-1,1])
+            select = aux[0][int((len(aux[0])-1)/2)+upordown]
+        else:
+            select = aux[0]
+        return select +l - cnt.radius
 
 
 
@@ -101,8 +129,7 @@ def resorurces_evol(t, c, L, l=0):
         if L[l] - c > cnt.L_threshold:
            
             L[l] =  L[l] - c
-            s = 0
-            print('land consumption')        
+            s = 0     
         
         else:  
             if  L[l] - cnt.L_threshold + cnt.sea_productivity > c+0.2:       
@@ -117,7 +144,7 @@ def resorurces_evol(t, c, L, l=0):
             else:
                 l = vector_jump(L, l)#randint(0,cnt.length-1)
                 s = -1
-                print ('jump to another square', l)
+                #print ('jump to another square', l)
 
 
         resources.append(L)
@@ -152,24 +179,6 @@ def plot_matrix(matrix, name):
     
     
 
-def wtf(M):
-
-    resources = []
-    resources.append(M)
-    
-    
-    for i in range(3):
-
-        p = 2*M
-        M = M +p #np.random.rand(6).reshape(2,3)
-        
-        print('rmatrix', M )
-        print('resuurces', resources)
-        resources.append(M)
-
- 
-    return resources
-
 def vector_movie(M, position, nom):
     fig, ax = plt.subplots()#111, 'matrix movie'
     A = np.rot90([M[0][::-1]])#
@@ -199,12 +208,12 @@ def vector_movie(M, position, nom):
         matrice.axes.scatter(0.7,position[i],  marker = 'o', facecolors = 'k', lw = 0, s=30)
         
 
-    ani = animation.FuncAnimation(fig, update, frames=len(M), interval=630)#
+    ani = animation.FuncAnimation(fig, update, frames=len(M), interval=230)#
 
     
     plt.show()
     name_gif = 'matrix_land_' + nom+'.gif'
-    ani.save(name_gif,  dpi = 80)#,writer = 'imagemagick')
+    ani.save(name_gif,  dpi = 80, writer = 'imagemagick')
 
 
     #ax01.set_title('$\\nu$ ' + str(v) + ' b ' + str(b))
@@ -220,7 +229,7 @@ Land = land_vector(cnt.length)
 name = sys.argv[1]
 #wtf(Land)
 #example_matrxani()
-resources, sea_consumption, production, position = resorurces_evol(t, cnt.consumption_rate, Land , int(cnt.length/2))
+resources, sea_consumption, production, position = resorurces_evol(t, cnt.consumption_rate, Land , int(cnt.length/2-0.5))
 plot_resources(sea_consumption, 'sea_consumption')
 #plot_matrix(resources[0], 'land_resources')
 
