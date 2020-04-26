@@ -18,3 +18,28 @@ is run by >python vector_resources_costal_plain_0.3.py name_plot
 
 is run by >python vector_multiple_consumers_0.4.py name_plot
 
+- agregated_sea_consumption_v5.py Fift instance of the code
+acts as a library or the unctions developed on the previous version 
+"sea-consumption-grid.py" is to call this pakage.
+this is a streamlined version to compute the total of sea resources consumed given some input parameters
+that where taken as a constant in the previous verions
+
+imput parameters:
+land_productivity or max land capacity
+number_of_consumers
+cnt (class containing all the constants)
+
+output:
+sum_of_sea_consumption
+
+is run by being called by sea-consumption-grid.py as
+import agregated_sea_consumption_v5 as mc
+
+- sea-consumption-grid.py first instance of the general code to compute under which circumstances there is sea consumption
+
+the code runs trought a set range of parameter spaces and computes the amount of sea resources consumed after X time steps
+returns an hisotgram of searesource consumed when varing several combinations of parameters
+start with land-production vs number of consumers.
+
+is run by > python sea-consumption-grid.py name_plot
+

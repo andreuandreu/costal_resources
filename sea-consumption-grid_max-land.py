@@ -26,9 +26,10 @@ import pickle
 import cmath
 
 
-''' version 0.1 of the code that explores under which parameter space the consumers need to consume algae in a costal desert'''
+''' version 0.1.1 of the code that explores under which parameter space the consumers need to consume algae in a costal desert'''
 '''
-the code runs trought a set range of parameter spaces and computes the amount of sea resources consumed after X time steps
+the code is the same as verion 0.1 sea-consumption-grid.py but changing one of the parameters of the grid, max_land_productivity instead of 
+runs trought a set range of parameter spaces and computes the amount of sea resources consumed after X time steps
 returns an hisotgram of searesource consumed when varing several combinations of parameters
 start with land-production vs number of consumers.
 '''
@@ -38,36 +39,41 @@ class limits:
     max_consumers = 9
     con_step = 1
 
-    min_land_prod = 0.1
-    max_land_prod = 0.3
-    prod_step = 0.03
+    #min_land_prod = 0.1
+    #max_land_prod = 0.3
+    #prod_step = 0.03
+
+    min_land_max = 1.9
+    max_land_max = 20
+    Lmax_step = 2
 
 def generate_grid(lim):
 
     consumers_parameter = np.arange(lim.min_consumers, lim.max_consumers, lim.con_step )
-    productivity_parameter = np.arange(lim.min_land_prod, lim.max_land_prod, lim.prod_step)
+    #productivity_parameter = np.arange(lim.min_land_prod, lim.max_land_prod, lim.prod_step)
+    max_land_parameter = np.arange(lim.min_land_max, lim.max_land_max, lim.Lmax_step)
 
-    return consumers_parameter, productivity_parameter
+    return consumers_parameter, max_land_parameter
 
-def call_model( consumers_number, land_productivity ):
+def call_model( consumers_number,  high_land):#land_productivity ):
     sim = mc.constants()
     t= mc.time_steps(cnt)
     Land = mc.land_vector(cnt, sim.length)
 
     consumers_array = np.random.randint(low =  0, high = cnt.length, size = consumers_number)#initial positions of the consumers
- 
-    sea_consumption = mc.resorurces_evol(cnt, t, Land, land_productivity, consumers_array)
+    max_land = np.random.uniform(low =  1.9, high = high_land, size=cnt.length)#5 #maximum of land combustible resources per cell
+    sea_consumption = mc.resorurces_evol(cnt, t, Land, max_land, consumers_array) #land_productivity
     all_sea_consumption = mc.acumulated_sea_consumption(cnt, sea_consumption)
     
     return all_sea_consumption
 
-def run_the_grid( consumers_parameter, productivity_parameter):
+def run_the_grid( consumers_parameter, max_land_parameter):# productivity_parameter
 
-    sea_consumption_matrix  = np.zeros( (len(consumers_parameter), len(productivity_parameter) ) )
+    sea_consumption_matrix  = np.zeros( (len(consumers_parameter), len(max_land_parameter) ) ) #len(productivity_parameter) 
 
     for i, c in enumerate(consumers_parameter):
         
-        for j, p in enumerate(productivity_parameter):
+        for j, p in enumerate(max_land_parameter):
             print ('we are in', i, j)
             s = call_model( c, p)
             sea_consumption_matrix[i,j] = s
@@ -78,7 +84,7 @@ def plot_sea_resources_used(lim, M, nom):
     fig, ax = plt.subplots()#111, 'matrix movie'
 
     ax.set_ylabel("n consumers")
-    ax.set_xlabel("land productivity")
+    ax.set_xlabel("$L_{max}$")
 
 
 
@@ -90,7 +96,7 @@ def plot_sea_resources_used(lim, M, nom):
     #matrice = ax.matshow(M, cmap = cm.Blues, norm = normalize, extent = [lim.min_land_prod, lim.max_land_prod, lim.min_consumers, lim.max_consumers ])
     matrice = ax.imshow(M, cmap = cm.Blues, norm = normalize, interpolation = 'none')#extent = [lim.min_land_prod, lim.max_land_prod, lim.max_consumers, lim.min_consumers ]
 
-    x =  np.arange(lim.min_land_prod, lim.max_land_prod, lim.prod_step)
+    x =  np.arange(lim.min_land_max, lim.max_land_max, lim.Lmax_step)
     nx = x.shape[0]
     n_labels = len(x)-1
     step_x = int(nx / (n_labels - 1))
@@ -113,7 +119,7 @@ def plot_sea_resources_used(lim, M, nom):
     plt.colorbar(matrice)
     #plt.rcParams['animation.ffmpeg_path'] = '/usr/bin/ffmpeg'
        
-    name_file = '../plots_costal_resources/histogram_sea_' + nom+'.png'
+    name_file = '../plots_costal_resources/histogram_sea_Lmax_' + nom+'.png'
     plt.savefig(name_file,  bbox_inches = 'tight')
     plt.show()
 
@@ -121,6 +127,6 @@ def plot_sea_resources_used(lim, M, nom):
 name = sys.argv[1]
 lim = limits()
 cnt = mc.constants()
-consumers_parameter, productivity_parameter = generate_grid(lim)
-matrix_sea_consumption = run_the_grid( consumers_parameter, productivity_parameter)
+consumers_parameter, max_land_parameter = generate_grid(lim)#productivity_parameter
+matrix_sea_consumption = run_the_grid( consumers_parameter, max_land_parameter)#productivity_parameter
 plot_sea_resources_used(lim, matrix_sea_consumption, name)
