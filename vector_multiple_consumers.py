@@ -20,7 +20,7 @@ import matplotlib.animation as animation
 import matplotlib
 from subprocess import call
 import matplotlib.ticker as ticker
-
+import plots_functions as pf
 
 
 import pickle
@@ -52,18 +52,18 @@ class constants:
     time = 60 #time steps
 
     consumption_rate = 1 #consumption rate, this has to be 1 as all the rest will be normalized to these units.
-    land_productivity = 0.2 #rate of increase of combustible in a land cell per unit of time, in units of c
+    land_productivity = 0.25 #rate of increase of combustible in a land cell per unit of time, in units of c
     high_land = 10 # maximum amount for the maximum capacity land cell, in units of c
     land_0 = high_land*0.67#4.5 #initial condition on land combustible, in units of c
-    max_land = np.random.uniform(low =  1.9, high = high_land, size=length)#5 #maximum of land combustible resources per cell, in units of c
-    L_threshold = 0.4 #threshold below which the consumer does not consume more resources from that cell, in units of c
+    max_land = np.random.uniform(low =  5, high = high_land, size=length)#5 #maximum of land combustible resources per cell, in units of c
+    L_threshold = 0.1 #threshold below which the consumer does not consume more resources from that cell, in units of c
     
     sea_productivity = 0.9 #amount of maximum combustible avaliable on the sea in form of algae by unit of time, in units of c 
     
-    radius = 4 # maximum number of cells that the consumer can move in one jump
-    margin = 0.2  #margin of combustible abaliabbility from the cell with maximum combustible where the consumer can move into
+    radius = 3 # maximum number of cells that the consumer can move in one jump
+    margin = 0.3  #margin of combustible abaliabbility from the cell with maximum combustible where the consumer can move into
     margin_margin = 0.1 #if two jumpers fall in the same cell, increase the margin of possible other cells where the jumper can go
-    n_consumers = 10 # number of consumers
+    n_consumers = 6 # number of consumers
     walkers_array = np.random.randint(low =  0, high = length, size=n_consumers)#initial positions of the consumers
     positions = np.arange(length)
 
@@ -224,21 +224,25 @@ def resorurces_evol(t, c, L, l):
         L[l[ind_landc[0]]] =  L[l[ind_landc[0]]] - c
 
         #sea consumption consumers
-        #ind_seac = np.where(  L[l[aux[0]]] - cnt.L_threshold + cnt.sea_productivity >= c  ) 
+        #ind_seac = np.where(  L[l[ind_landc[0]]] - cnt.L_threshold + cnt.sea_productivity >= c  ) #[aux[0]]
         ind_seac = (L[l]  - c <= cnt.L_threshold)  &  (L[l] - cnt.L_threshold + cnt.sea_productivity >= c ) 
         land_margin = L[l[ind_seac]] - cnt.L_threshold
 
         ufff = np.where(land_margin > cnt.consumption_rate)
+        
         if ind_seac[0]:
             print ('ind sea', ind_seac) 
             print ('low resources sea', L[l[ind_seac]])
             print ('lllll', l[ind_seac])
 
             print ('land margin', land_margin, cnt.L_threshold)
-
+            s[ind_seac] = c  - land_margin
+            #s = c  - land_margin
         L[l[ind_seac]] = cnt.L_threshold
 
-        s[ind_seac] = c  - land_margin
+        #s[ind_seac] = c  - land_margin
+
+        
 
         #jumping consumers 
         aux =   np.where(L[l]  - c <= cnt.L_threshold)  #&  (L[l] - cnt.L_threshold + cnt.sea_productivity < c ) 
@@ -256,6 +260,8 @@ def resorurces_evol(t, c, L, l):
     #    print ('sea', e)
     #for e in position:
     #    print ('positt', e)
+    #aux = np.where(np.array(sea_consumption) > 0) 
+    #print( '\n sssss', aux, '\n sasaaaasss' )
 
     return resources, sea_consumption, production, position
     
@@ -292,48 +298,7 @@ def acumulated_sea_consumption(sea_resources):
     return np.matrix.sum(sea_matrrix)
     
 
-def vector_movie(M, position, nom):
-    fig, ax = plt.subplots()#111, 'matrix movie'
-    A = np.rot90([M[0][::-1]])#
-    print('pppppppp', position[0])
-    ax.clear()
-    normalize = matplotlib.colors.Normalize(vmin=0, vmax=cnt.high_land)
-    matrice = ax.matshow(A, cmap = pltcm.OrRd, norm = normalize)# #extent = [left,right, up, down ]
-    
-    jumper_plot_position = 1.05
 
-    #cm = plt.get_cmap('gist_rainbow')
-    #cNorm = colors.Normalize(vmin = 0, vmax = cnt.n_consumers -1)
-    #scalarMap = pltcm.ScalarMappable(norm=cNorm, cmap = cm)
-    #facecolors = ['k', 'r', 'b', 'g', 'o', 'y']
-    #ax.set_color_cycle([cm(1.*i/cnt.n_consumers)  for i in range(cnt.n_consumers)])
-    for i, s in   enumerate(position[0]):
-        ax.plot(jumper_plot_position, s, marker = 'o',  markersize=8, fillstyle = 'full', markeredgewidth = 0.0)#.plot(position[0])#, facecolors = scalarMap.to_rgba[i]
-    plt.colorbar(matrice)
-    #plt.rcParams['animation.ffmpeg_path'] = '/usr/bin/ffmpeg'
-    
-    def update(i):
-        #matrice.axes.clear()
-        A = np.rot90([M[i][::-1]])
-        #matrice.axes.clear()
-
-        if i>0:
-            #color = A[position[i-1][1], position[i-1][0]]
-            #print( color, 'aaa', position[i-1], A )
-            for s in position[i-1]:
-                matrice.axes.plot(jumper_plot_position, s,  marker = 'o', c = 'w', lw = 0, markersize=8.5, fillstyle = 'full',  markeredgewidth = 0.0)#
-        matrice.set_array(A)
-        print (i, 'iiii', len(position), len(M))
-        for i, s in enumerate(position[i]):
-            matrice.axes.plot(jumper_plot_position, s,  marker = 'o', lw = 0,  markersize=8, fillstyle = 'full',  markeredgewidth = 0.0)#, facecolors = scalarMap.to_rgba[i],, markeredgewidth = 0.0
-        
-
-    ani = animation.FuncAnimation(fig, update, frames=len(M), interval=80)#
-
-    
-    #plt.show()
-    name_gif = '../plots_costal_resources/matrix_land_' + nom+'.gif'
-    ani.save(name_gif,  dpi = 80)#,writer = 'imagemagick')
 
 
     #ax01.set_title('$\\nu$ ' + str(v) + ' b ' + str(b))
@@ -350,13 +315,14 @@ name = sys.argv[1]
 
 
 resources, sea_consumption, production, position = resorurces_evol(t, cnt.consumption_rate, Land , cnt.walkers_array)
-plot_resources(sea_consumption, name + '_individual')
+#plot_resources(sea_consumption, name + '_individual')
 plot_total_resources(sea_consumption, name+ '_total')
 acumulated_sea_consumption(sea_consumption)
 
-vector_movie(resources, position, name)
+pf.vector_movie(resources, position, name)# sea_consumption
 
-plt.show()
+#plt.show()
+
 
 
 

@@ -18,7 +18,7 @@ import matplotlib.animation as animation
 import matplotlib
 from subprocess import call
 import matplotlib.ticker as ticker
-import agregated_sea_consumption_v5 as mc
+import agregated_sea_consumption_v9 as mc
 
 
 
@@ -32,10 +32,11 @@ the code runs trought a set range of parameter spaces and computes the amount of
 returns an hisotgram of searesource consumed when varing several combinations of parameters
 start with land-production vs number of consumers.
 '''
+#python sea-consumption-grid.py name_plot
 
 class limits:
     min_consumers = 2
-    max_consumers = 9
+    max_consumers = 44
     con_step = 1
 
     min_land_prod = 0.1
@@ -69,7 +70,7 @@ def run_the_grid( consumers_parameter, productivity_parameter):
         
         for j, p in enumerate(productivity_parameter):
             print ('we are in', i, j)
-            s = call_model( c, p)
+            s = call_model(c, p)
             sea_consumption_matrix[i,j] = s
     
     return sea_consumption_matrix
@@ -117,6 +118,7 @@ def plot_sea_resources_used(lim, M, nom):
     plt.savefig(name_file,  bbox_inches = 'tight')
     plt.show()
 
+start  = time.perf_counter() 
 
 name = sys.argv[1]
 lim = limits()
@@ -124,3 +126,5 @@ cnt = mc.constants()
 consumers_parameter, productivity_parameter = generate_grid(lim)
 matrix_sea_consumption = run_the_grid( consumers_parameter, productivity_parameter)
 plot_sea_resources_used(lim, matrix_sea_consumption, name)
+
+print ('time to run all this stuff', str(datetime.timedelta(seconds = (time.perf_counter() - start))))

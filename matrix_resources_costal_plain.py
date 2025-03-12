@@ -182,6 +182,8 @@ def wtf(M):
 def matrix_movie(M, position, nom):
     fig, ax = plt.subplots()#111, 'matrix movie'
     A = M[0].T
+
+    print("AAAAA", A)
     ax.clear()
     normalize = matplotlib.colors.Normalize(vmin=0, vmax=cnt.max_land)
     matrice = ax.matshow(A, cmap = cm.OrRd, norm = normalize)

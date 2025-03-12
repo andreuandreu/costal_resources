@@ -32,7 +32,7 @@ class constants:
     max_land = 9
     sea_productivity = 1
     consumption_rate = 1
-    L_threshold = 0.4
+    L_threshold = 0# 0.4
 
 
 
@@ -58,7 +58,7 @@ def land_model_1exp():
     plt.plot(L_array)
 
 
-def resorurces_evol(t, c, ):
+def resorurces_evol(t, c ):
 
     resources = []
     consumption = []
@@ -69,7 +69,8 @@ def resorurces_evol(t, c, ):
         if L > cnt.L_threshold:
             R = L - c
             #p = cnt.land_productivity/np.exp(L+cnt.L_threshold) 
-            p = cnt.land_productivity*(1-L/cnt.max_land)*L
+            p = cnt.land_productivity*(1-L/cnt.max_land)*L 
+            #p = cnt.land_productivity*(1-L/cnt.max_land)*L
             L += p - c
             
             print('land')
@@ -84,11 +85,11 @@ def resorurces_evol(t, c, ):
             if R < 0:
                 print('resources exahsted!111, jumping to next cell')
 
-        resources.append(R)
-        consumption.append(c)
-        production.append(p)
+        resources.append(np.array(R).flatten())
+        consumption.append(np.array(c).flatten())
+        production.append(np.array(p).flatten())
 
-    return resources
+    return resources, consumption, production
     
 def land_model_Log(t):
 
@@ -96,22 +97,26 @@ def land_model_Log(t):
     
     plt.plot( L)
 
-def plot_resources(resources, name):
+def plot_resources(series, names ):
 
-    fig = plt.figure(name)
+    fig = plt.figure()
     ax = fig.add_subplot(111)
     ax.set_xlabel("t")
-    ax.set_ylabel("R")
-
-    ax.plot(resources)
+    ax.set_ylabel("r")
+ 
+    for s, n in zip(series, names):
+        ax.plot(s, label = n)
+    
+    ax.legend()
 
 
 
 cnt = constants()
 t= time_steps()
 #sea, land = resorurces(t)
-resources = resorurces_evol(t, cnt.consumption_rate)
-plot_resources(resources, 'resources')
+resources, consumption, production = resorurces_evol(t, cnt.consumption_rate)
+
+plot_resources([resources, consumption, production], ['resources','consumption','production'] )
 #land_model_1exp()
 #land_model_Log(t)
 plt.show()

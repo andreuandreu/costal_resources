@@ -164,6 +164,9 @@ def plot_resources(resources, name):
     ax.set_xlabel("t")
     ax.set_ylabel("Sea resources used")
 
+    aux = np.where(np.array(resources) < 0)
+    for i in aux[0]:
+        resources[i] = 0
     ax.plot(resources)
     name_sea = '../plots_costal_resources/sea_resources_'+ name + '.eps'
     plt.savefig(name_sea,  bbox_inches = 'tight')
@@ -206,7 +209,8 @@ def vector_movie(M, position, nom):
         matrice.set_array(A)
         print (i, 'iiii', len(position), len(M))
         matrice.axes.scatter(0.7,position[i],  marker = 'o', facecolors = 'k', lw = 0, s=30)
-        
+    
+    ax.axis('off')
 
     ani = animation.FuncAnimation(fig, update, frames=len(M), interval=230)#
 
