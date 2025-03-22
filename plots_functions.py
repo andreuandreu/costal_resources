@@ -159,6 +159,54 @@ def plot_resources(cnt, sea, land, name):
     plt.savefig(name_sea,  bbox_inches = 'tight')
     plt.show()
 
+def plot_1cell_resources(cnt, sea, land, name):
+
+    fig = plt.figure(name)
+    ax = fig.add_subplot(111)
+    ax.set_xlabel("t")
+    ax.set_ylabel("fuel in cell ")
+
+    ax.plot(sea.T[c], alpha = 0.5, label= 'Seaweed')
+    ax.plot(land.T[c], alpha = 0.5, label = 'Land fuel')
+
+    t = np.linspace(0, cnt.time, len(sea))
+   
+
+    plt.legend(frameon = False)
+
+    name = name_file(cnt, name)
+    name_sea = '../plots_costal_resources/plot1_vector_movie/1cell_resources_'+ name + '.svg'
+    #name_sea = '../plots_costal_resources/plot1_vector_movie/1cell_resources_'+ name + '.eps'
+    #name_sea = '../plots_costal_resources/plot1_vector_movie/1cell_resources_'+ name + '.png'
+    plt.savefig(name_sea,  bbox_inches = 'tight')
+    plt.show()
+
+def plot3_1cell_resources(cnt, sea, land, name):
+
+    nrow = 3
+    ncol = 1
+    fig, axs = plt.subplots(nrows=nrow, ncols=ncol)
+    #ax.set_xlabel("t")
+    #ax.set_ylabel("fuel in cell ")
+
+    which_cells = [3, 8, 15]
+    for ax, c in zip(axs, which_cells):
+        ax.plot(sea.T[c], alpha = 0.5, label= 'Seaweed')
+        ax.plot(land.T[c], alpha = 0.5, label = 'Land fuel')
+
+    t = np.linspace(0, cnt.time, len(sea))
+   
+
+    plt.legend(frameon = False)
+
+    name = name_file(cnt, name)
+    name_sea = '../plots_costal_resources/plot1_vector_movie/3-1cell_resources_'+ name + '.svg'
+    #name_sea = '../plots_costal_resources/plot1_vector_movie/3-1cell_resources_'+ name + '.eps'
+    #name_sea = '../plots_costal_resources/plot1_vector_movie/3-1cell_resources_'+ name + '.png'
+    plt.savefig(name_sea,  bbox_inches = 'tight')
+    plt.show()
+
+
 
 def plot_sea_resources_used(lim, M, nom):
     

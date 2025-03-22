@@ -57,7 +57,7 @@ class constants:
    
     burning_rate = 1  #burning rate, this has to be 1 as all the rest will be normalized to these units.
     high_land = 5#30 # maximum amount for the maximum capacity land cell, in burning rate units. 
-    high_sea = 4#2*high_land#high_land*0.67#4.5 #initial condition on land combustible, in burning rate units. 
+    high_sea = 8#2*high_land#high_land*0.67#4.5 #initial condition on land combustible, in burning rate units. 
     min_land = 0.01*burning_rate# minimum amount of land fuel always present but negligible
 
     land_productivity = 0.2# constant for the productivity of land, in burning rate units.  
@@ -274,6 +274,9 @@ def main(cnt):
 
     burned_land_memo = []
     burned_sea_memo = []
+
+    burned_land_mat = np.zeros(cnt.length)
+    burned_sea_mat = np.zeros(cnt.length)
     movements = burners
     
     print('N BURNERS!!!' , cnt.n_consumers)
@@ -285,8 +288,16 @@ def main(cnt):
         
         burned_land = sum(land_arr - new_land_arr)
         burned_sea = sum(sea_arr - new_sea_arr)
+
+        burned_land_arr = land_arr - new_land_arr
+        burned_sea_arr = sea_arr - new_sea_arr
+
         burned_land_memo = np.append(burned_land_memo, burned_land)
         burned_sea_memo = np.append(burned_sea_memo, burned_sea)
+
+        burned_land_mat = np.vstack([burned_land_mat, burned_land_arr])
+        burned_sea_mat = np.vstack([burned_sea_mat, burned_sea_arr])
+        
         
         land_arr, sea_arr = fuels_evol(cnt, new_land_arr, new_sea_arr, max_land, max_sea)
         #print(f"\nt{t + 1}: Agent Positions: {burners}")
@@ -305,6 +316,7 @@ def main(cnt):
     #return sum(burned_land_memo), sum(burned_sea_memo)
 
     #pf.plot_resources(cnt, burned_sea_memo, burned_land_memo,  'nom')
+    pf.plot3_1cell_resources(cnt, sea_fuel_levels, land_fuel_levels,  'nom')
     #pf.vector_movie(cnt, land_fuel_levels, sea_fuel_levels, movements,  'nom')
     return norm_burned_land, norm_burned_sea, movements
 
