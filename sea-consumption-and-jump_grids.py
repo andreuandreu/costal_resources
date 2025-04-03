@@ -25,7 +25,7 @@ import pickle
 import cmath
 
 
-''' version 0.1.1 of the code that explores under which parameter space the consumers need to consume algae in a costal desert'''
+''' version 0.9 of the code that explores under which parameter space the consumers need to consume algae in a costal desert'''
 '''
 the code is the same as version 0.1 sea-consumption-grid.py but changing one of the parameters of the grid, max_land_productivity instead of 
 runs trough a set range of parameter spaces and computes the amount of sea resources consumed after X time steps
@@ -42,45 +42,74 @@ class limits:
     max_land_prod = 0.33
     prod_step = 0.022
 
-    #min_land_max = 2
-    #max_land_max = 8
-    #Lmax_step = 0.5
+    high_land_min = 2
+    high_land_max = 16
+    Lhigh_step = 1.0
 
-def generate_grid(lim):
+    min_tidal_deluge = 2
+    max_tidal_deluge = 8
+    tidal_deluge_step = 0.5
+
+    high_sea_min = 4
+    high_sea_max = 16
+    high_sea_step = 1
+
+
+def generate_grid(lim, which_par):
 
     consumers_parameter = np.arange(lim.min_consumers, lim.max_consumers, lim.con_step )
-    productivity_parameter = np.arange(lim.min_land_prod, lim.max_land_prod, lim.prod_step)
-    #max_land_parameter = np.arange(lim.min_land_max, lim.max_land_max, lim.Lmax_step)
 
-    return consumers_parameter, productivity_parameter# max_land_parameter
+    if which_par == 'land_productivity':
+        change_par = np.arange(lim.min_land_prod, lim.max_land_prod, lim.prod_step)
+    elif which_par == 'high_land':
+        change_par = np.arange(lim.high_land_min, lim.high_land_max, lim.Lhigh_step)
+    elif which_par == 'tidal_deluge':
+        change_par = np.arange(lim.min_tidal_deluge, lim.max_tidal_deluge, lim.tidal_deluge_step)
+    elif which_par == 'high_sea':
+        change_par = np.arange(lim.high_sea_min, lim.high_sea_max, lim.high_sea_step)
+    else:
+        print ('wrong parameter name, names shall be: ')
+        print ('land_productivity, high_land, tidal_deluge, high_sea')
+        print ('you wrote', which_par)
+        print ('exiting')
+        sys.exit()
 
-def call_model( consumers_number,  high_land):#land_productivity ):
+    return consumers_parameter, change_par
+
+def call_model( consumers_number,  chang_par, which_par):#land_productivity ):
     #sim = mc.constants()
     t= mc.time_steps(cnt)
-    max_land, max_sea, land_vector, sea_vector = mc.create_n_inisialise_landscapes(cnt)
+
+    high_land, high_sea, land_vector, sea_vector = mc.create_n_inisialise_landscapes(cnt)
+        
     cnt.n_consumers = consumers_number
-    #cnt.high_land = high_land
-    cnt.land_productivity = high_land
+    
+    if which_par == 'land_productivity':
+        cnt.land_productivity = chang_par
+    elif which_par == 'high_land':
+        cnt.high_land = chang_par
+    elif which_par == 'tidal_deluge': 
+        cnt.tidal_deluge = chang_par
+    elif which_par == 'high_sea':    
+        cnt.high_sea = chang_par
 
     burned_land, burned_sea, movements = mc.main(cnt)
     #consumers_array = np.random.randint(low =  0, high = cnt.length, size = consumers_number)#initial positions of the consumers
-    #max_land = np.random.uniform(low =  1.9, high = high_land, size=cnt.length)#5 #maximum of land combustible resources per cell
-    #sea_consumption, n_jumps_array = mc.resorurces_evol(cnt, t, Land, max_land, consumers_array) #land_productivity
     #all_sea_consumption = mc.acumulated_sea_consumption(cnt, sea_consumption)
     #all_jumps = mc.acumulated_n_jumps(cnt, n_jumps_array)
     
     return burned_land, burned_sea, movements
 
-def run_the_grid( consumers_parameter, max_land_parameter):# productivity_parameter
+def run_the_grid( consumers_parameter, change_par, which_par):# productivity_parameter
 
-    sea_consumption_matrix  = np.zeros( (len(consumers_parameter), len(productivity_parameter)  ) ) #len(max_land_parameter)
-    land_consumption_matrix  = np.zeros( (len(consumers_parameter), len(productivity_parameter)  ) ) #len(max_land_parameter)
-    movements = np.zeros( cnt.time ) #len(max_land_parameter)
+    sea_consumption_matrix  = np.zeros( (len(consumers_parameter), len(change_par)  ) ) 
+    land_consumption_matrix  = np.zeros( (len(consumers_parameter), len(change_par)  ) ) 
+    movements = np.zeros( cnt.time ) 
     for i, c in enumerate(consumers_parameter):
         
-        for k, p in enumerate(max_land_parameter):
+        for k, p in enumerate(change_par):
             
-            l, s, m = call_model( c, p)
+            l, s, m = call_model( c, p, which_par)
             print ('we are in', i, k, 'and we got ', l, s)
             sea_consumption_matrix[i,k] = s
             land_consumption_matrix[i,k] = l
@@ -91,13 +120,14 @@ def run_the_grid( consumers_parameter, max_land_parameter):# productivity_parame
 start  = time.perf_counter() 
 
 name = sys.argv[1]
+which_par = sys.argv[2]
 
 lim = limits()
 cnt = mc.constants()
-consumers_parameter, productivity_parameter  = generate_grid(lim)#max_land_parameter
-matrix_sea_consumption, matrix_land_consumption, matrix_jumps = run_the_grid(consumers_parameter, productivity_parameter)#max_land_parameter
-pf.plot_sea_resources_used(lim, matrix_sea_consumption, name)
-pf.plot_land_resources_used(lim, matrix_land_consumption, name)
+consumers_parameter, change_par  = generate_grid(lim, which_par)
+matrix_sea_consumption, matrix_land_consumption, matrix_jumps = run_the_grid(consumers_parameter, change_par, which_par)
+pf.plot_sea_resources_used(lim, matrix_sea_consumption, name, which_par)
+pf.plot_land_resources_used(lim, matrix_land_consumption,  name, which_par)
 #plot_jumps(lim, matrix_jumps, name+'_jumps')
 
 

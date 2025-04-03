@@ -34,10 +34,6 @@ class constants:
     consumption_rate = 1
     L_threshold = 0# 0.4
 
-
-
-
-
 def time_steps():
     
     t = np.arange(1,10, 0.5)
@@ -108,7 +104,6 @@ def plot_resources(series, names ):
         ax.plot(s, label = n)
     
     ax.legend()
-
 
 
 cnt = constants()

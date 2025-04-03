@@ -48,11 +48,9 @@ sum_of_sea_burning
 '''
 
 #
-
-
 class constants:
     length = 44#length of the land area in cells
-    time = 633 #max time 
+    time = 433 #max time 
     t_step_lenth = 0.5 # lenth of temporal steps
    
     burning_rate = 1  #burning rate, this has to be 1 as all the rest will be normalized to these units.
@@ -67,7 +65,7 @@ class constants:
     n_consumers = 8# number of consumers
     positions = np.arange(length)
 
-    burn_frames = 22 #do not use the first N frames to compute gloval burning of resources
+    burn_frames = 33 #do not use the first N frames to compute gloval burning of resources
 
 
 def create_n_inisialise_landscapes(cnt):
@@ -316,7 +314,7 @@ def main(cnt):
     #return sum(burned_land_memo), sum(burned_sea_memo)
 
     #pf.plot_resources(cnt, burned_sea_memo, burned_land_memo,  'nom')
-    pf.plot3_1cell_resources(cnt, sea_fuel_levels, land_fuel_levels,  'nom')
+    #pf.plot3_1cell_resources(cnt, sea_fuel_levels, land_fuel_levels,  'nom')
     #pf.vector_movie(cnt, land_fuel_levels, sea_fuel_levels, movements,  'nom')
     return norm_burned_land, norm_burned_sea, movements
 

@@ -208,14 +208,25 @@ def plot3_1cell_resources(cnt, sea, land, name):
 
 
 
-def plot_sea_resources_used(lim, M, nom):
+def plot_sea_resources_used(lim, M, nom, which_par):
     
     fig, ax = plt.subplots()#111, 'matrix movie'
 
     ax.set_ylabel("n burners")
-    #ax.set_xlabel("$L_{max}$")
-    ax.set_xlabel("$L_{p}$")
 
+    if which_par == 'land_productivity':
+        ax.set_xlabel("$L_{p}$")
+        x =  np.arange(lim.min_land_prod, lim.max_land_prod, lim.prod_step)
+    elif which_par == 'high_land':
+        ax.set_xlabel("$L^{max}$")
+        x =  np.arange(lim.high_land_min, lim.high_land_max, lim.Lhigh_step)
+    elif which_par == 'tidal_deluge': 
+        ax.set_xlabel("$S_{d}$")
+        x =  np.arange(lim.min_tidal_deluge, lim.max_tidal_deluge, lim.tidal_deluge_step)
+    elif which_par == 'high_sea':    
+        ax.set_xlabel("$S^{max}$")
+        x =  np.arange(lim.high_sea_min, lim.high_sea_max, lim.high_sea_step)
+    
     
 
     max_matrice = max(map(max, M))
@@ -231,8 +242,6 @@ def plot_sea_resources_used(lim, M, nom):
     cmap = cm.get_cmap('Blues', 5)    # 6 discrete colors
     matrice = ax.pcolormesh(M, cmap = cmap, norm = normalize)#extent = [lim.min_land_prod, lim.max_land_prod, lim.max_consumers, lim.min_consumers ]
 
-    #x =  np.arange(lim.min_land_max, lim.max_land_max, lim.Lmax_step)
-    x =  np.arange(lim.min_land_prod, lim.max_land_prod, lim.prod_step)
     nx = x.shape[0]
     n_labels = len(x)-1
     step_x = int(nx / (n_labels - 1))
@@ -264,18 +273,28 @@ def plot_sea_resources_used(lim, M, nom):
     plt.savefig(name_file,  bbox_inches = 'tight')
 
 
-def plot_land_resources_used(lim, M, nom):
+def plot_land_resources_used(lim, M, nom, which_par):
     fig, ax = plt.subplots()#111, 'matrix movie'
 
     ax.set_ylabel("n burners")
-    #ax.set_xlabel("$L_{max}$")
-    ax.set_xlabel("$L_{p}$")
-
     
+    if which_par == 'land_productivity':
+        ax.set_xlabel("$L_{p}$")
+        x =  np.arange(lim.min_land_prod, lim.max_land_prod, lim.prod_step)
+    elif which_par == 'high_land':
+        ax.set_xlabel("$L^{max}$")
+        x =  np.arange(lim.high_land_min, lim.high_land_max, lim.Lhigh_step)
+    elif which_par == 'tidal_deluge': 
+        ax.set_xlabel("$S_{d}$")
+        x =  np.arange(lim.min_tidal_deluge, lim.max_tidal_deluge, lim.tidal_deluge_step)
+    elif which_par == 'high_sea':    
+        ax.set_xlabel("$S^{max}$")
+        x =  np.arange(lim.high_sea_min, lim.high_sea_max, lim.high_sea_step)
+    
+
 
     max_matrice = max(map(max, M))
     min_matrice = min(map(min, M))
-
     print ('max', max_matrice)
     print ('final M land', '\n', M)
  
@@ -286,8 +305,7 @@ def plot_land_resources_used(lim, M, nom):
     cmap = cm.get_cmap('OrRd', 5)    # 6 discrete colors
     matrice = ax.pcolormesh(M, cmap = cmap, norm = normalize)#extent = [lim.min_land_prod, lim.max_land_prod, lim.max_consumers, lim.min_consumers ]
 
-    #x =  np.arange(lim.min_land_max, lim.max_land_max, lim.Lmax_step)
-    x =  np.arange(lim.min_land_prod, lim.max_land_prod, lim.prod_step)
+
     nx = x.shape[0]
     n_labels = len(x)-1
     step_x = int(nx / (n_labels - 1))
