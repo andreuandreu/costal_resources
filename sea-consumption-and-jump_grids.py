@@ -46,13 +46,13 @@ class limits:
     high_land_max = 16
     Lhigh_step = 1.0
 
-    min_tidal_deluge = 2
-    max_tidal_deluge = 8
-    tidal_deluge_step = 0.5
+    min_tidal_deluge = 0.2
+    max_tidal_deluge = 0.45
+    tidal_deluge_step = 0.025
 
     high_sea_min = 4
     high_sea_max = 16
-    high_sea_step = 1
+    high_sea_step = 1.0
 
 
 def generate_grid(lim, which_par):
