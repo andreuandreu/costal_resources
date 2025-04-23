@@ -37,7 +37,7 @@ class limits:
 
     scarce_land_prod = 0.15
     medium_tidal_deluge = 0.25
-    high_sea_deluge = 0.4
+    high_tidal_deluge = 0.4
 
 '''configuration of the simulation'''
 class par:

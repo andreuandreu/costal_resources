@@ -11,7 +11,7 @@ import matplotlib
 from subprocess import call
 import matplotlib.ticker as ticker
 
-import config as cfg
+import scripts.config as cfg
 import matplotlib.cm as pltcm
 import matplotlib.ticker as ticker
 from matplotlib.ticker import FormatStrFormatter

@@ -18,7 +18,7 @@ import matplotlib.animation as animation
 import matplotlib
 from subprocess import call
 import matplotlib.ticker as ticker
-import agregated_sea_consumption_v9 as mc
+import scripts.agregated_sea_consumption_v9 as mc
 
 
 

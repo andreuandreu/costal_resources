@@ -18,7 +18,7 @@ import matplotlib
 from subprocess import call
 import matplotlib.ticker as ticker
 
-import config as cfg
+import scripts.config as cfg
 
 import pickle
 import cmath
