@@ -20,7 +20,7 @@ import matplotlib.animation as animation
 import matplotlib
 from subprocess import call
 import matplotlib.ticker as ticker
-import plots_functions as pf
+import scripts.plots_functions as pf
 
 
 import pickle

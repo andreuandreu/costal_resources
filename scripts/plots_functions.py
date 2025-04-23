@@ -11,17 +11,18 @@ import matplotlib
 from subprocess import call
 import matplotlib.ticker as ticker
 
+import config as cfg
 import matplotlib.cm as pltcm
 import matplotlib.ticker as ticker
 from matplotlib.ticker import FormatStrFormatter
 
 
-def matrix_movie(cnt, M, position, nom):
+def matrix_movie(par, var, M, position, nom):
     fig, ax = plt.subplots()#111, 'matrix movie'
     A = [M[0].T]
-    print("AAAAA", A)
+    print("\n Initial values landscape vector", A, '\n')
     ax.clear()
-    normalize = matplotlib.colors.Normalize(vmin=0, vmax=cnt.high_land)
+    normalize = matplotlib.colors.Normalize(vmin=0, vmax=var.high_land)
     matrice = ax.matshow(A, cmap = cm.OrRd, norm = normalize)
     ax.scatter(position[0][0], position[0][1], marker = 'o', facecolors = 'k')#.plot(position[0])
     plt.colorbar(matrice)
@@ -51,7 +52,7 @@ def matrix_movie(cnt, M, position, nom):
     plt.show()
 
 
-def vector_movie(cnt, L, S, position, nom):
+def vector_movie(par, var, L, S, position, nom):
     #fig, ax = plt.subplots()#111, 'matrix movie'
     fig = plt.figure()
     ax1 = fig.add_subplot(111)
@@ -62,15 +63,15 @@ def vector_movie(cnt, L, S, position, nom):
 
     plt.subplots_adjust(bottom=0.1, right=0.9, top=0.9) 
 
-    print('pppppppp', position[0])
+    print('\n initial position', position[0], '\n')
     ax1.clear()
     ax2.clear()
     fig.patch.set_alpha(0.0)
     fig.tight_layout()
     #
 
-    normalizeL = matplotlib.colors.Normalize(vmin=0, vmax=cnt.high_land)
-    normalizeS = matplotlib.colors.Normalize(vmin=0, vmax=cnt.high_sea)
+    normalizeL = matplotlib.colors.Normalize(vmin=0, vmax=var.high_land)
+    normalizeS = matplotlib.colors.Normalize(vmin=0, vmax=var.high_sea)
     matriceL = ax1.matshow(A, cmap = pltcm.OrRd, norm = normalizeL)# #extent = [left,right, up, down ]
     matriceS = ax2.matshow(B, cmap = pltcm.Blues, norm = normalizeS)# #extent = [left,right, up, down ]
     
@@ -79,10 +80,10 @@ def vector_movie(cnt, L, S, position, nom):
     ax2.set_aspect(aspect=1.6)
 
     #cm = plt.get_cmap('gist_rainbow')
-    #cNorm = colors.Normalize(vmin = 0, vmax = cnt.n_consumers -1)
+    #cNorm = colors.Normalize(vmin = 0, vmax = par.n_consumers -1)
     #scalarMap = pltcm.ScalarMappable(norm=cNorm, cmap = cm)
     #facecolors = ['k', 'r', 'b', 'g', 'o', 'y']
-    #ax.set_color_cycle([cm(1.*i/cnt.n_consumers)  for i in range(cnt.n_consumers)])
+    #ax.set_color_cycle([cm(1.*i/par.n_consumers)  for i in range(par.n_consumers)])
 
     jumper_plot_position = -0.5
 
@@ -122,22 +123,23 @@ def vector_movie(cnt, L, S, position, nom):
 
     
     #plt.show()
-    name_gif = '../plots_costal_resources/matrix_land_' + nom+'.gif'
+    name_gif = '../' + par.plot_dir + 'matrix_land_' + nom+'.gif'
     ani.save(name_gif,  dpi = 80)#,writer = 'imagemagick')
     matriceL.axes.clear()
 
 
-def plot_resources(cnt, sea, land, name):
+def plot_aggregated_resources(par, var, sea, land, name):
 
     fig = plt.figure(name)
     ax = fig.add_subplot(111)
+
     ax.set_xlabel("t")
-    ax.set_ylabel("fuels burned")
+    ax.set_ylabel("Fuels Burned")
 
     ax.plot(sea, alpha = 0.5, label='Seaweed')
     ax.plot(land, alpha = 0.5, label = 'Land fuel')
 
-    t = np.linspace(0, cnt.time, len(sea))
+    t = np.linspace(0, par.time, len(sea))
     t_avg = []
     sea_avg = []
     land_avg = []
@@ -153,13 +155,47 @@ def plot_resources(cnt, sea, land, name):
 
     plt.legend(frameon = False)
 
-    name = name_file(cnt, name)
-    name_sea = '../plots_costal_resources/plot2_time_series/sea_resources_'+ name + '.eps'
-    name_sea = '../plots_costal_resources/plot2_time_series/sea_resources_'+ name + '.png'
+    name = name_file(par, var, name)
+    name_sea = '../' + par.plot_dir + 'plot2_time_series/sea_resources_'+ name + '.eps'
+    name_sea = '../' + par.plot_dir + 'plot2_time_series/sea_resources_'+ name + '.png'
     plt.savefig(name_sea,  bbox_inches = 'tight')
     plt.show()
 
-def plot_1cell_resources(cnt, sea, land, name):
+def plot_aggregated_movements(par, var, sea, land, name):
+
+    fig = plt.figure(name)
+    ax = fig.add_subplot(111)
+
+    ax.set_xlabel("t")
+    ax.set_ylabel("Number of movements")
+
+    ax.plot(sea, alpha = 0.5, label='Seaweed')
+    ax.plot(land, alpha = 0.5, label = 'Land fuel')
+
+    t = np.linspace(0, par.time, len(sea))
+    t_avg = []
+    sea_avg = []
+    land_avg = []
+    rang = 20
+    for ind in range(len(sea)-rang +1):
+        sea_avg.append(np.mean(sea[ind:ind+rang]))
+        land_avg.append(np.mean(land[ind:ind+rang]))
+        t_avg.append(np.mean(t[ind:ind+rang]))
+
+    ax.plot(t_avg, sea_avg, color="blue", linewidth=2.4)
+    ax.plot(t_avg, land_avg, color="orange", linewidth=2.4)
+
+
+    plt.legend(frameon = False)
+
+    name = name_file(par, var, name)
+    #name_sea = '../' + par.plot_dir + 'plot_3time_series_jumps_'+ name + '.eps'
+    #name_sea = '../' + par.plot_dir + 'plot3_3time_series_jumps_'+ name + '.svg'
+    name_sea = '../' + par.plot_dir + 'plot_3time_series_jumps_'+ name + '.png'
+    plt.savefig(name_sea,  bbox_inches = 'tight')
+    plt.show()
+
+def plot_1cell_resources(par, var, sea, land, name):
 
     fig = plt.figure(name)
     ax = fig.add_subplot(111)
@@ -169,19 +205,19 @@ def plot_1cell_resources(cnt, sea, land, name):
     ax.plot(sea.T[c], alpha = 0.5, label= 'Seaweed')
     ax.plot(land.T[c], alpha = 0.5, label = 'Land fuel')
 
-    t = np.linspace(0, cnt.time, len(sea))
+    t = np.linspace(0, par.time, len(sea))
    
 
     plt.legend(frameon = False)
 
-    name = name_file(cnt, name)
-    name_sea = '../plots_costal_resources/plot1_vector_movie/1cell_resources_'+ name + '.svg'
-    #name_sea = '../plots_costal_resources/plot1_vector_movie/1cell_resources_'+ name + '.eps'
-    #name_sea = '../plots_costal_resources/plot1_vector_movie/1cell_resources_'+ name + '.png'
+    name = name_file(par, var, name)
+    name_sea = '../' + par.plot_dir + 'plot1_vector_movie/1cell_resources_'+ name + '.svg'
+    #name_sea = '../' + par.plot_dir + 'plot1_vector_movie/1cell_resources_'+ name + '.eps'
+    #name_sea = '../' + par.plot_dir + 'plot1_vector_movie/1cell_resources_'+ name + '.png'
     plt.savefig(name_sea,  bbox_inches = 'tight')
     plt.show()
 
-def plot3_1cell_resources(cnt, sea, land, name):
+def plot3_1cell_resources(par, var, sea, land, name):
 
     nrow = 3
     ncol = 1
@@ -194,25 +230,25 @@ def plot3_1cell_resources(cnt, sea, land, name):
         ax.plot(sea.T[c], alpha = 0.5, label= 'Seaweed')
         ax.plot(land.T[c], alpha = 0.5, label = 'Land fuel')
 
-    t = np.linspace(0, cnt.time, len(sea))
+    t = np.linspace(0, par.time, len(sea))
    
 
     plt.legend(frameon = False)
 
-    name = name_file(cnt, name)
-    name_sea = '../plots_costal_resources/plot1_vector_movie/3-1cell_resources_'+ name + '.svg'
-    #name_sea = '../plots_costal_resources/plot1_vector_movie/3-1cell_resources_'+ name + '.eps'
-    #name_sea = '../plots_costal_resources/plot1_vector_movie/3-1cell_resources_'+ name + '.png'
+    name = name_file(par, var, name)
+    name_sea = '../' + par.plot_dir + 'plot_3-1cell_resources_'+ name + '.svg'
+    #name_sea = '../' + par.plot_dir + 'plot_3-1cell_resources_'+ name + '.eps'
+    #name_sea = '../' + par.plot_dir + 'plot_3-1cell_resources_'+ name + '.png'
     plt.savefig(name_sea,  bbox_inches = 'tight')
     plt.show()
 
 
 
-def plot_sea_resources_used(lim, M, nom, which_par):
+def plot_sea_resources_used(par, lim, M, nom, which_par):
     
     fig, ax = plt.subplots()#111, 'matrix movie'
 
-    ax.set_ylabel("n burners")
+    ax.set_ylabel("HFG Number")
 
     if which_par == 'land_productivity':
         ax.set_xlabel("$L_{p}$")
@@ -227,8 +263,6 @@ def plot_sea_resources_used(lim, M, nom, which_par):
         ax.set_xlabel("$S^{max}$")
         x =  np.arange(lim.high_sea_min, lim.high_sea_max, lim.high_sea_step)
     
-    
-
     max_matrice = max(map(max, M))
     min_matrice = min(map(min, M))
 
@@ -269,14 +303,15 @@ def plot_sea_resources_used(lim, M, nom, which_par):
     plt.colorbar(matrice)
     #plt.rcParams['animation.ffmpeg_path'] = '/usr/bin/ffmpeg'
        
-    name_file = '../plots_costal_resources/plot3_seaGrid/histogram_sea_Lmax_' + nom+'.png'
-    plt.savefig(name_file,  bbox_inches = 'tight')
+    string_name_file = '../' + par.plot_dir + 'plot_seaGrid_histogram_sea_Lmax_' + nom+'.png'
+    #string_name_file = '../' + par.plot_dir + 'plot_seaGrid_histogram_sea_Lmax_' + nom+'.svg'
+    plt.savefig(string_name_file,  bbox_inches = 'tight')
 
 
-def plot_land_resources_used(lim, M, nom, which_par):
+def plot_land_resources_used(par, lim, M, nom, which_par):
     fig, ax = plt.subplots()#111, 'matrix movie'
 
-    ax.set_ylabel("n burners")
+    ax.set_ylabel("HFG Number ")
     
     if which_par == 'land_productivity':
         ax.set_xlabel("$L_{p}$")
@@ -333,16 +368,17 @@ def plot_land_resources_used(lim, M, nom, which_par):
     plt.colorbar(matrice)
     #plt.rcParams['animation.ffmpeg_path'] = '/usr/bin/ffmpeg'
        
-    name_file = '../plots_costal_resources/plot4_landGrid/histogram_land_Lmax_' + nom+'.png'
-    plt.savefig(name_file,  bbox_inches = 'tight')
+    string_name_file = '../' + par.plot_dir + 'plot4_landGrid/histogram_land_Lmax_' + nom+'.png'
+    plt.savefig(string_name_file,  bbox_inches = 'tight')
 
 
 
 
-def plot_jumps(lim, M, nom):
+def plot_jumps_matrix(par, lim, M, nom):
+
     fig, ax = plt.subplots()#111, 'matrix movie'
 
-    ax.set_ylabel("n burners")
+    ax.set_ylabel("HFG Number ")
     #ax.set_xlabel("$L_{max}$")
     ax.set_xlabel("$L_{p}$")
 
@@ -382,17 +418,35 @@ def plot_jumps(lim, M, nom):
     plt.colorbar(matrice)
     #plt.rcParams['animation.ffmpeg_path'] = '/usr/bin/ffmpeg'
        
-    name_file = '../plots_costal_resources/histogram_jump_Lmax_' + nom+'.png'
-    plt.savefig(name_file,  bbox_inches = 'tight')
+    string_name_file = '../' + par.plot_dir + 'histogram_jump_Lmax_' + nom+'.png'
+    plt.savefig(string_name_file,  bbox_inches = 'tight')
+
+
+def plot_2jumps_vectors(par, jumpVectors, nom):
+
+    fig, ax = plt.subplots()
+
+    ax.set_ylabel(" Average Movements ")
+    ax.set_xlabel("HFG Number")
+
+    
+    #plt.plot(par.n_consumers, MovVectors[0], color="orange", 'o', markersize=8)
+    plt.plot(par.n_consumers, jumpVectors[0], ls = '--', color="magenta", alpha = 0.5, label = r'$S_d = 0.25$')
+    #plt.plot(par.n_consumers, MovVectors[1], color="blue", '+', markersize=8)
+    plt.plot(par.n_consumers, jumpVectors[1], ls = '-.', color="magenta", label = r'$S_d = 0.4$')
+    plt.legend(frameon = False)
+       
+    string_name_file = '../' + par.plot_dir + '2jump_vectors_' + nom+'.png'
+    plt.savefig(string_name_file,  bbox_inches = 'tight')
+    #string_name_file = '../' + par.plot_dir + '2jump_vectors_' + nom+'.svg'
+    #plt.savefig(string_name_file,  bbox_inches = 'tight')
     
 
-
-
-def name_file(cnt, name):
+def name_file(par, var, name):
     
-    characteristics = 'burn'+ '{:2}'.format(cnt.n_consumers)+'_cells'+ '{:2}'.format(cnt.length)+\
-                    '_t'+ '{:3}'.format(cnt.time)+'_hL'+'{:1}'.format(cnt.high_land)+'_hS'+\
-                    '{:}'.format(cnt.high_sea)+'_Lp'+ '{:.1f}'.format(cnt.land_productivity)+\
-                    '_tD' + '{:.1f}'.format(cnt.tidal_deluge)
+    characteristics = 'burn'+ '{:2}'.format(par.n_consumers)+'_cells'+ '{:2}'.format(par.length)+\
+                    '_t'+ '{:3}'.format(par.time)+'_hL'+'{:1}'.format(var.high_land)+'_hS'+\
+                    '{:}'.format(var.high_sea)+'_Lp'+ '{:.1f}'.format(var.land_productivity)+\
+                    '_tD' + '{:.1f}'.format(var.tidal_deluge)
     
     return name +'_'+ characteristics

@@ -18,14 +18,13 @@ import matplotlib
 from subprocess import call
 import matplotlib.ticker as ticker
 
-
+import config as cfg
 
 import pickle
 import cmath
 
 
 '''
-Second instance of the code, 
 extends the previous consumption and production of resources to a NxM matrix 
 and plots the result in a dianamic movie showing the matrix as cells
 and plots a graph of all the sea resources consumed.
@@ -33,31 +32,17 @@ and plots a graph of all the sea resources consumed.
 #>python matrix_resources_costal_plain.py name_plot
 
 
-def land_grid(m,l):
+def land_grid(m,l, maxL=5):
     '''create grid'''
     
-    land_matrix = np.full((m, l), cnt.max_land)#np.random.rand(6).reshape(m,l)*cnt.land_0
+    land_matrix = np.full((m, l), maxL)#np.random.rand(6).reshape(m,l)*var.land_0
     
     print('t_o land', land_matrix)
     return land_matrix
 
-
-class constants:
-
-    land_0 = 2.5
-    land_productivity = 0.2
-    max_land = 5
-    sea_productivity = 0.9
-    consumption_rate = 1
-    L_threshold = 0.4
-    time = 10
-    length = 3
-    width = 2
-
-
-def time_steps():
+def time_steps(par):
     
-    t = np.arange(1,cnt.time, 0.5)
+    t = np.arange(1, par.time, 0.5)
     
     return t
 
@@ -69,7 +54,7 @@ def jump(L):
 
     return aux[0][0], aux[0][1]
 
-def area_jump(L, m, l, d):
+def area_jump( par, L, m, l, d):
     '''jumping strategy, within an area defined by a distance d, returns the cell with the most resources'''
 
     low_lim = m-d
@@ -77,22 +62,18 @@ def area_jump(L, m, l, d):
         low_lim = 0
 
     high_lim = m+d
-    if high_lim >  cnt.length-1:
-        high_lim = cnt.length-1
+    if high_lim >  par.length-1:
+        high_lim = par.length-1
         
   
     area = L[low_lim:high_lim][:]
     aux = np.where(area == max(area))
 
-
-
     return aux[0][0], aux[0][1]
 
 
 
-
-
-def resorurces_evol(t, c, L, m=0, l=0):
+def resorurces_evol(var, par, t, L, m=0, l=0):
 
     '''operates the matrix of resources'''
     resources = []
@@ -101,39 +82,42 @@ def resorurces_evol(t, c, L, m=0, l=0):
     position = []
     resources.append(L)
     position.append([m,l])
+
+    c = par.consumption_rate
     
     for e in t:
 
-        p = cnt.land_productivity* (1 - L/cnt.max_land) *L
+        p = var.land_productivity* (1 - L/var.max_land) *L
         L = L + p
 
-        if L[m][l] - c > cnt.L_threshold:
+        if L[m][l] - c > par.L_threshold:
            
             L[m][l] =  L[m][l] - c
             s = 0
             print('land consumption')        
         
         else:  
-            if m == 0 and L[m][l] - cnt.L_threshold + cnt.sea_productivity > c+0.2:       
+            if m == 0 and L[m][l] - par.L_threshold + var.sea_productivity > c+0.2:       
                 
-                land_margin = L[m][l] - cnt.L_threshold
-                L[m][l] = cnt.L_threshold 
+                land_margin = L[m][l] - par.L_threshold
+                L[m][l] = par.L_threshold 
 
                 s = c  - land_margin
                 print('sea/land consumption')
                 
                 
             else:
-                m = randint(0,cnt.width-1)
-                l = randint(0,cnt.length-1)
+                m = randint(0,par.width-1)
+                l = randint(0,par.length-1)
                 s = -1
                 print ('jump to another square', m, l)
-
 
         resources.append(L)
         position.append([m,l])
         sea_consumption.append(s)
         production.append(p)
+
+
     for e in resources:
         print('eee', e, '\n', '\n')
     return resources, sea_consumption, production, position
@@ -159,13 +143,11 @@ def plot_matrix(matrix, name):
     
     plt.colorbar(M, ax=ax)
     
-    
 
 def wtf(M):
 
     resources = []
     resources.append(M)
-    
     
     for i in range(3):
 
@@ -175,17 +157,16 @@ def wtf(M):
         print('rmatrix', M )
         print('resuurces', resources)
         resources.append(M)
-
  
     return resources
 
-def matrix_movie(M, position, nom):
+def matrix_movie(par, var, M, position, nom):
     fig, ax = plt.subplots()#111, 'matrix movie'
     A = M[0].T
 
-    print("AAAAA", A)
+    print("Initial values of Landscape vector ", A)
     ax.clear()
-    normalize = matplotlib.colors.Normalize(vmin=0, vmax=cnt.max_land)
+    normalize = matplotlib.colors.Normalize(vmin=0, vmax=var.max_land)
     matrice = ax.matshow(A, cmap = cm.OrRd, norm = normalize)
     ax.scatter(position[0][0], position[0][1], marker = 'o', facecolors = 'k')#.plot(position[0])
     plt.colorbar(matrice)
@@ -210,7 +191,7 @@ def matrix_movie(M, position, nom):
 
     
     plt.show()
-    name_gif = 'matrix_land_' + nom+'.gif'
+    name_gif = '../' + par.plots_dir + 'matrix_land_' + nom+'.gif'
     ani.save(name_gif,  dpi = 80)#,writer = 'imagemagick')
 
 
@@ -219,21 +200,26 @@ def matrix_movie(M, position, nom):
     #ax.set_xlabel("m")
     #ax.set_ylabel("l")
     
+def main():
 
+    var = cfg.var()
+    par = cfg.par()
+    t= time_steps(par)
+    Land = land_grid(var.width, var.length, var.max_land)
+    name = sys.argv[1]
+    #wtf(Land)
+    #example_matrxani()
+    resources, sea_consumption, production, position = resorurces_evol(var, par, t, Land , 0, 0)
+    plot_resources(sea_consumption, 'sea_consumption')
+    #plot_matrix(resources[0], 'land_resources')
 
-cnt = constants()
-t= time_steps()
-Land = land_grid(cnt.width, cnt.length)
-name = sys.argv[1]
-#wtf(Land)
-#example_matrxani()
-resources, sea_consumption, production, position = resorurces_evol(t, cnt.consumption_rate, Land , 0, 0)
-plot_resources(sea_consumption, 'sea_consumption')
-#plot_matrix(resources[0], 'land_resources')
+    matrix_movie(var, resources, position, name)
 
-matrix_movie(resources, position, name)
+    plt.show()
 
-plt.show()
+if __name__ == "__main__":
+    main()
+
 
 
 
