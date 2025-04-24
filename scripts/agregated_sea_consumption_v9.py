@@ -3,6 +3,7 @@
 from __future__ import division
 import numpy as np
 import scipy
+import random
 from random import randint
 from random import choice
 from random import randrange
@@ -11,8 +12,8 @@ from scipy.ndimage.interpolation import shift
 
 from subprocess import call
 
-import scripts.config as cfg
-import scripts.plots_functions as pf
+import config as cfg
+import plots_functions as pf
 
 
 
@@ -36,13 +37,13 @@ sum_of_sea_burning
 '''
 
 
-def create_n_inisialise_landscapes(par, var):
+def create_n_inisialise_landscapes(par):
 
     '''create land vector'''
-    max_land = np.random.uniform(low = var.min_land , high = var.high_land, size=par.length)#5 #maximum of land combustible resources per cell, in burning rate units. 
-    max_sea = np.random.uniform(low =  0.0, high = var.high_sea, size=par.length)
+    max_land = np.random.uniform(low = par.min_land , high = par.high_land, size=par.length)#5 #maximum of land combustible resources per cell, in burning rate units. 
+    max_sea = np.random.uniform(low =  0.0, high = par.high_sea, size=par.length)
     
-    #land_vector= np.full(l, var.high_land )#uniform initial conditions
+    #land_vector= np.full(l, par.high_land )#uniform initial conditions
     land_vector= np.random.uniform(low =  0, high = 1, size=par.length ) * max_land  #random initial conditions
     sea_vector= np.random.uniform(low =  0, high = 1, size=par.length ) * max_sea  #random initial conditions    
     
@@ -56,13 +57,12 @@ def time_steps(par):
     return t
 
 
-def fuels_evol(var, land_arr, sea_arr, max_land, max_sea):
+def fuels_evol(par, land_arr, sea_arr, max_land, max_sea):
 
     '''operates the vector of fuels, replenishes fuel levels naturally after each time step
     
     Parameters:
     par (class): contains model parameters 
-    var (class): contains model variables as intitial conditions
     land_arr (array): level of land fuel in each cell.
     sea_arr (float): level of sea cell in each cell.
 
@@ -71,14 +71,14 @@ def fuels_evol(var, land_arr, sea_arr, max_land, max_sea):
     '''
 
     ###land fuel
-    increase_land_fuel = var.land_productivity* (1 - land_arr/max_land) * land_arr 
-    new_land_arr = land_arr + increase_land_fuel + var.min_land
+    increase_land_fuel = par.land_productivity* (1 - land_arr/max_land) * land_arr 
+    new_land_arr = land_arr + increase_land_fuel + par.min_land
     
     ###sea fuel
     new_sea_arr = sea_arr.copy()
     for i, s in enumerate(sea_arr):
-        accumulated = s + var.tidal_deluge
-        if accumulated <= max_sea[i] - var.tidal_deluge:
+        accumulated = s + par.tidal_deluge
+        if accumulated <= max_sea[i] - par.tidal_deluge:
             new_sea_arr[i] = accumulated
         else:
             new_sea_arr[i] = max_sea[i]
@@ -118,32 +118,44 @@ def consume(burning, land, sea ):
         return land, 0
     
 
-def acumulated_burnings(par, land_fuel, sea_fuel):    
-    '''computes the acumulated sea burning of all the consumers after a burndown period
+def accumulated_burnings(par, land_fuel, sea_fuel):    
+    '''computes the accumulated sea burning of all the consumers after a burndown period
     
-    this is the mean sea condumtion by all the agents through all the time, after a burnout 
-    period is remobed'''
+    this is the mean sea burning by all the agents through all the time, after a burnout 
+    period is removed'''
     land_matrix = np.matrix(np.array(land_fuel[par.burn_frames:]))
-    all_land = np.matrix.sum(land_matrix)/len(land_fuel[par.burn_frames:])/par.n_consumers
+    all_land = np.matrix.sum(land_matrix)/(len(land_fuel[par.burn_frames:])*par.n_consumers)
 
     sea_matrix = np.matrix(np.array(sea_fuel[par.burn_frames:]))
-    all_sea = np.matrix.sum(sea_matrix)/len(sea_fuel[par.burn_frames:])/par.n_consumers
+    all_sea = np.matrix.sum(sea_matrix)/(len(sea_fuel[par.burn_frames:])*par.n_consumers)
     #print ('all the sea resources ', all_sea)
 
     return all_land, all_sea
 
-def acumulated_n_jumps(par, n_jumps):    
-    '''computes the acumulated jumps per consumer after a burndown period
+def accumulated_n_jumps(par, positions):    
+    '''computes the accumulated jumps per consumer after a burndown period
     
     this is the averaged by all the agents through all the time, after a burnout 
-    period is remobed'''
+    period is removed'''
 
-    jump_matrrix = np.matrix(np.array(n_jumps[par.burn_frames:]))
-    print ('all the jumps resources ', np.matrix.sum(jump_matrrix), len(jump_matrrix[par.burn_frames:]))
-    return np.matrix.sum(jump_matrrix)
+    # understand why increasing the number of burners reduces the movility after a certain amount
+    # Hypothesis 1, np.sum(l != pos_matrix[i+1]) works differently than I expected
+    # Hypothesis 2, something in the thresholds of my code make the agents not move once thre are little resources in the est of the cells.
+    
+    pos_matrix = np.matrix(np.array(positions[par.burn_frames:]))
+    #print('jump matrix', pos_matrix)
+    total_jumps = 0
 
-    import numpy as np
-import random
+    for i, l in enumerate(pos_matrix):
+        if i < len(pos_matrix)-1:
+            time_jumps = np.sum(l != pos_matrix[i+1])
+        total_jumps = total_jumps + time_jumps
+        
+    norm_jumps = total_jumps/(len(positions[par.burn_frames:])*par.n_consumers)
+    #print ('\n all the jumps ', total_jumps, 'jump length', len(positions[par.burn_frames:]), norm_jumps, '\n')
+   
+    return norm_jumps
+    
 
 def initialize_agents(n, s):
     """
@@ -224,16 +236,13 @@ def move_burner(i, burner_pos, land_arr, burners, R):
 
     return burners
 
-def main():
+def main(par):
 
     # Parameters
     np.set_printoptions(precision=3)
-
-    par = cfg.par()
-    var = cfg.var()
-
+   
     # Initialize environment land and sea environments and agents
-    max_land, max_sea, land_arr, sea_arr = create_n_inisialise_landscapes(par, var)
+    max_land, max_sea, land_arr, sea_arr = create_n_inisialise_landscapes(par)
     burners = initialize_agents(par.n_consumers, par.length)
 
     # Simulate multiple time steps
@@ -245,7 +254,7 @@ def main():
 
     burned_land_mat = np.zeros(par.length)
     burned_sea_mat = np.zeros(par.length)
-    movements = burners
+    positions = burners
     
     print('\n N HFG/Burners:' , par.n_consumers, ' \n')
    
@@ -266,27 +275,27 @@ def main():
         burned_land_mat = np.vstack([burned_land_mat, burned_land_arr])
         burned_sea_mat = np.vstack([burned_sea_mat, burned_sea_arr])
         
-        land_arr, sea_arr = fuels_evol(var, new_land_arr, new_sea_arr, max_land, max_sea)
+        land_arr, sea_arr = fuels_evol(par, new_land_arr, new_sea_arr, max_land, max_sea)
         #print(f"\nt{t + 1}: Agent Positions: {burners}")
         #print(f"land fuel: {land_arr}'\n sea fuel: {sea_arr}\n")
 
         land_fuel_levels = np.vstack([land_fuel_levels, land_arr])
         sea_fuel_levels = np.vstack([sea_fuel_levels, sea_arr])
-        movements = np.vstack([movements, burners])
+        positions = np.vstack([positions, burners])
 
 
-    norm_burned_land, norm_burned_sea = acumulated_burnings(par, burned_land_memo, burned_sea_memo)
-
+    norm_burned_land, norm_burned_sea = accumulated_burnings(par, burned_land_memo, burned_sea_memo)
+    norm_movements = accumulated_n_jumps(par, positions)
     #print( f" norm land fuel: {norm_burned_land}'\n norm sea fuel: {norm_burned_sea}\n" )
     #print( f" all land fuel: {sum(burned_land_memo)}'\n all sea fuel: {sum(burned_sea_memo)}\n" )
     #print( f" all sea fuel: {all_sea}'\n all sea fuel: {all_sea}\n" )
     
-    #pf.plot_aggregated_resources(par, var, burned_sea_memo, burned_land_memo,  'nom')
-    #pf.plot3_1cell_resources(par, var, sea_fuel_levels, land_fuel_levels,  'nom')
-    #pf.vector_movie(par, var, land_fuel_levels, sea_fuel_levels, movements,  'nom')
+    #pf.plot_aggregated_resources(par, burned_sea_memo, burned_land_memo,  'nom')
+    #pf.plot3_1cell_resources(par, sea_fuel_levels, land_fuel_levels,  'nom')
+    #pf.vector_movie(par, land_fuel_levels, sea_fuel_levels, movements,  'nom')
 
-    return norm_burned_land, norm_burned_sea, movements
+    return norm_burned_land, norm_burned_sea, norm_movements
 
-
+par = cfg.par()
 if __name__ == "__main__":
-    main()
+    main(par)

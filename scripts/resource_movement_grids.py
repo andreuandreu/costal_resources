@@ -4,11 +4,8 @@ from __future__ import division
 import time
 import datetime
 import sys
-import colorsys
 import numpy as np
 import scipy
-import matplotlib.pyplot as plt
-import matplotlib.cm as cm
 
 from random import randint
 from random import choice
@@ -17,19 +14,16 @@ from scipy.ndimage.interpolation import shift
 
 from subprocess import call
 
-import scripts.config as cfg
-import scripts.agregated_sea_consumption_v9 as mc
-import scripts.plots_functions as pf
+import matplotlib.pyplot as plt
 
+import config as cfg
+import agregated_sea_consumption_v9 as mc
+import plots_functions as pf
 
-import pickle
-import cmath
 
 
 ''' version 0.9 of the code that explores under which parameter space the consumers need to consume algae in a costal desert'''
 '''
-the code is the same as version 0.1 sea-consumption-grid.py but changing one of the parameters of the grid, max_land_productivity instead of 
-runs trough a set range of parameter spaces and computes the amount of sea resources consumed after X time steps
 returns an hysotgram of searesource consumed when varying several combinations of parameters
 start with land-production vs number of consumers.
 '''
@@ -56,38 +50,40 @@ def generate_grid(lim, which_par):
 
     return consumers_parameter, change_par
 
-def generate_2vectors(lim):
+def settings_movility_seaFuels(lim):
 
-    consumers_parameter = np.arange(lim.min_consumers, lim.max_consumers, lim.con_step )
+    consumers_parameter = np.arange(lim.min_consumers, lim.max_consumers+2, lim.con_step )
 
-    low_land_mediumNhigh_sea = [lim.scarce_land_productivity, lim.medium_tidal_deluge, lim.high_tidal_deluge]
+    low_land_mediumNhigh_sea = [lim.scarce_land_prod, lim.medium_tidal_deluge, lim.high_tidal_deluge]
 
     return consumers_parameter, low_land_mediumNhigh_sea
 
 
-def call_model(par, var, consumers_number,  chang_par, which_par):#land_productivity ):
+def call_model(par, consumers_number,  chang_par, which_par):#land_productivity ):
     #sim = mc.constants()
     t = mc.time_steps(par)
 
-    high_land, high_sea, land_vector, sea_vector = mc.create_n_inisialise_landscapes(par, var)
+    high_land, high_sea, land_vector, sea_vector = mc.create_n_inisialise_landscapes(par)
         
     par.n_consumers = consumers_number
     
     if which_par == 'land_productivity':
-        var.land_productivity = chang_par
+        par.land_productivity = chang_par
     elif which_par == 'high_land':
-        var.high_land = chang_par
+        par.high_land = chang_par
     elif which_par == 'tidal_deluge': 
-        var.tidal_deluge = chang_par
+        par.tidal_deluge = chang_par
     elif which_par == 'high_sea':    
-        var.high_sea = chang_par
+        par.high_sea = chang_par
+    elif which_par == 'burners_number':    
+        par.n_consumers = chang_par
 
-    burned_land, burned_sea, movements = mc.main(par, var)
+    norm_burned_land, norm_burned_sea, norm_movements = mc.main(par)
     #consumers_array = np.random.randint(low =  0, high = par.length, size = consumers_number)#initial positions of the consumers
-    #all_sea_consumption = mc.acumulated_sea_consumption(par, var, sea_consumption)
-    #all_jumps = mc.acumulated_n_jumps(par, var, n_jumps_array)
+    #all_sea_consumption = mc.acumulated_sea_consumption(par, sea_consumption)
+    #all_jumps = mc.acumulated_n_jumps(par, n_jumps_array)
     
-    return burned_land, burned_sea, movements
+    return norm_burned_land, norm_burned_sea, norm_movements
 
 def run_the_grid(par, consumers_parameter, change_par, which_par):# productivity_parameter
 
@@ -98,12 +94,30 @@ def run_the_grid(par, consumers_parameter, change_par, which_par):# productivity
         
         for k, p in enumerate(change_par):
             
-            l, s, m = call_model( c, p, which_par)
+            l, s, m = call_model( par, c, p, which_par)
             print ('we are in', i, k, 'and we got ', l, s)
             sea_consumption_matrix[i,k] = s
             land_consumption_matrix[i,k] = l
     
     return sea_consumption_matrix, land_consumption_matrix, movements
+
+def run_two_values(par, consumers_parameter, values, which_par):# productivity_parameter
+
+    sea_consumption_vectors  = np.zeros( (len(consumers_parameter), 2  ) ) 
+    land_consumption_vectors  = np.zeros( (len(consumers_parameter), 2  ) ) 
+    movements_vectors = np.zeros( (len(consumers_parameter), 2 ) ) 
+
+    for i, c in enumerate(consumers_parameter):
+        
+        for k, v in enumerate(values[1:]):
+            par.land_productivity = values[0]
+            l, s, m = call_model( par, c, v, which_par)
+            print ('we are in', i, k, c, v, 'and we got ', l, s)
+            sea_consumption_vectors[i,k] = s
+            land_consumption_vectors[i,k] = l
+            movements_vectors[i,k] = m
+    
+    return sea_consumption_vectors, land_consumption_vectors, movements_vectors
 
 
 def main():
@@ -115,16 +129,17 @@ def main():
 
     lim = cfg.limits()
     par = cfg.par()
-    var = cfg.var()
+    
     #consumers_parameter, change_par  = generate_grid(lim, which_par)
     #matrix_sea_consumption, matrix_land_consumption, matrix_jumps = run_the_grid(par, consumers_parameter, change_par, which_par)
     #pf.plot_sea_resources_used(par, lim, matrix_sea_consumption, name, which_par)
     #pf.plot_land_resources_used(par, lim, matrix_land_consumption,  name, which_par)
     #pf.plot_jumps_matrix(par, lim, matrix_jumps, name+'_jumps')
 
-    consumers_parameter, low_land_mediumNhigh_sea = generate_2vectors(lim)
-    vectors_sea_consumption, vectors_land_consumption, vectors_jumps = run_the_grid(par, consumers_parameter, change_par, which_par)
-    pf.plot_2jumps_vectors(par, vectors_jumps, name)
+    consumers_parameter, low_land_mediumNhigh_sea = settings_movility_seaFuels(lim)
+    vectors_sea_consumption, vectors_land_consumption, vectors_jumps =\
+          run_two_values(par, consumers_parameter, low_land_mediumNhigh_sea, which_par)
+    pf.plot_2jumps_vectors(par, consumers_parameter, vectors_jumps, name)
 
     print ('time to run all this stuff', str(datetime.timedelta(seconds = (time.perf_counter() - start))))
     

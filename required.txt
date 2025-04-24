@@ -1,10 +1,5 @@
 #It is possible to specify requirements as plain names.
-sys
-colorsys
 numpy
 scipy
 matplotlib
-random
-collections
-subprocess
 future

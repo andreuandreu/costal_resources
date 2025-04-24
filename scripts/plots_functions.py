@@ -11,18 +11,19 @@ import matplotlib
 from subprocess import call
 import matplotlib.ticker as ticker
 
-import scripts.config as cfg
 import matplotlib.cm as pltcm
 import matplotlib.ticker as ticker
 from matplotlib.ticker import FormatStrFormatter
 
+import config as cfg
 
-def matrix_movie(par, var, M, position, nom):
+
+def matrix_movie(par, M, position, nom):
     fig, ax = plt.subplots()#111, 'matrix movie'
     A = [M[0].T]
     print("\n Initial values landscape vector", A, '\n')
     ax.clear()
-    normalize = matplotlib.colors.Normalize(vmin=0, vmax=var.high_land)
+    normalize = matplotlib.colors.Normalize(vmin=0, vmax=par.high_land)
     matrice = ax.matshow(A, cmap = cm.OrRd, norm = normalize)
     ax.scatter(position[0][0], position[0][1], marker = 'o', facecolors = 'k')#.plot(position[0])
     plt.colorbar(matrice)
@@ -52,7 +53,7 @@ def matrix_movie(par, var, M, position, nom):
     plt.show()
 
 
-def vector_movie(par, var, L, S, position, nom):
+def vector_movie(par, L, S, position, nom):
     #fig, ax = plt.subplots()#111, 'matrix movie'
     fig = plt.figure()
     ax1 = fig.add_subplot(111)
@@ -70,8 +71,8 @@ def vector_movie(par, var, L, S, position, nom):
     fig.tight_layout()
     #
 
-    normalizeL = matplotlib.colors.Normalize(vmin=0, vmax=var.high_land)
-    normalizeS = matplotlib.colors.Normalize(vmin=0, vmax=var.high_sea)
+    normalizeL = matplotlib.colors.Normalize(vmin=0, vmax=par.high_land)
+    normalizeS = matplotlib.colors.Normalize(vmin=0, vmax=par.high_sea)
     matriceL = ax1.matshow(A, cmap = pltcm.OrRd, norm = normalizeL)# #extent = [left,right, up, down ]
     matriceS = ax2.matshow(B, cmap = pltcm.Blues, norm = normalizeS)# #extent = [left,right, up, down ]
     
@@ -123,12 +124,12 @@ def vector_movie(par, var, L, S, position, nom):
 
     
     #plt.show()
-    name_gif = '../' + par.plot_dir + 'matrix_land_' + nom+'.gif'
+    name_gif = './' + par.plots_dir + 'matrix_land_' + nom+'.gif'
     ani.save(name_gif,  dpi = 80)#,writer = 'imagemagick')
     matriceL.axes.clear()
 
 
-def plot_aggregated_resources(par, var, sea, land, name):
+def plot_aggregated_resources(par, sea, land, name):
 
     fig = plt.figure(name)
     ax = fig.add_subplot(111)
@@ -155,13 +156,13 @@ def plot_aggregated_resources(par, var, sea, land, name):
 
     plt.legend(frameon = False)
 
-    name = name_file(par, var, name)
-    name_sea = '../' + par.plot_dir + 'plot2_time_series/sea_resources_'+ name + '.eps'
-    name_sea = '../' + par.plot_dir + 'plot2_time_series/sea_resources_'+ name + '.png'
+    name = name_file(par, name)
+    name_sea = './' + par.plots_dir + 'plot2_time_series/sea_resources_'+ name + '.eps'
+    name_sea = './' + par.plots_dir + 'plot2_time_series/sea_resources_'+ name + '.png'
     plt.savefig(name_sea,  bbox_inches = 'tight')
     plt.show()
 
-def plot_aggregated_movements(par, var, sea, land, name):
+def plot_aggregated_movements(par, sea, land, name):
 
     fig = plt.figure(name)
     ax = fig.add_subplot(111)
@@ -188,14 +189,14 @@ def plot_aggregated_movements(par, var, sea, land, name):
 
     plt.legend(frameon = False)
 
-    name = name_file(par, var, name)
-    #name_sea = '../' + par.plot_dir + 'plot_3time_series_jumps_'+ name + '.eps'
-    #name_sea = '../' + par.plot_dir + 'plot3_3time_series_jumps_'+ name + '.svg'
-    name_sea = '../' + par.plot_dir + 'plot_3time_series_jumps_'+ name + '.png'
+    name = name_file(par, name)
+    #name_sea = './' + par.plots_dir + 'plot_3time_series_jumps_'+ name + '.eps'
+    #name_sea = './' + par.plots_dir + 'plot3_3time_series_jumps_'+ name + '.svg'
+    name_sea = './' + par.plots_dir + 'plot_3time_series_jumps_'+ name + '.png'
     plt.savefig(name_sea,  bbox_inches = 'tight')
     plt.show()
 
-def plot_1cell_resources(par, var, sea, land, name):
+def plot_1cell_resources(par, sea, land, name):
 
     fig = plt.figure(name)
     ax = fig.add_subplot(111)
@@ -210,14 +211,14 @@ def plot_1cell_resources(par, var, sea, land, name):
 
     plt.legend(frameon = False)
 
-    name = name_file(par, var, name)
-    name_sea = '../' + par.plot_dir + 'plot1_vector_movie/1cell_resources_'+ name + '.svg'
-    #name_sea = '../' + par.plot_dir + 'plot1_vector_movie/1cell_resources_'+ name + '.eps'
-    #name_sea = '../' + par.plot_dir + 'plot1_vector_movie/1cell_resources_'+ name + '.png'
+    name = name_file(par, name)
+    name_sea = './' + par.plots_dir + 'plot1_vector_movie/1cell_resources_'+ name + '.svg'
+    #name_sea = './' + par.plots_dir + 'plot1_vector_movie/1cell_resources_'+ name + '.eps'
+    #name_sea = './' + par.plots_dir + 'plot1_vector_movie/1cell_resources_'+ name + '.png'
     plt.savefig(name_sea,  bbox_inches = 'tight')
     plt.show()
 
-def plot3_1cell_resources(par, var, sea, land, name):
+def plot3_1cell_resources(par, sea, land, name):
 
     nrow = 3
     ncol = 1
@@ -235,10 +236,10 @@ def plot3_1cell_resources(par, var, sea, land, name):
 
     plt.legend(frameon = False)
 
-    name = name_file(par, var, name)
-    name_sea = '../' + par.plot_dir + 'plot_3-1cell_resources_'+ name + '.svg'
-    #name_sea = '../' + par.plot_dir + 'plot_3-1cell_resources_'+ name + '.eps'
-    #name_sea = '../' + par.plot_dir + 'plot_3-1cell_resources_'+ name + '.png'
+    name = name_file(par, name)
+    name_sea = './' + par.plots_dir + 'plot_3-1cell_resources_'+ name + '.svg'
+    #name_sea = './' + par.plots_dir + 'plot_3-1cell_resources_'+ name + '.eps'
+    #name_sea = './' + par.plots_dir + 'plot_3-1cell_resources_'+ name + '.png'
     plt.savefig(name_sea,  bbox_inches = 'tight')
     plt.show()
 
@@ -303,8 +304,8 @@ def plot_sea_resources_used(par, lim, M, nom, which_par):
     plt.colorbar(matrice)
     #plt.rcParams['animation.ffmpeg_path'] = '/usr/bin/ffmpeg'
        
-    string_name_file = '../' + par.plot_dir + 'plot_seaGrid_histogram_sea_Lmax_' + nom+'.png'
-    #string_name_file = '../' + par.plot_dir + 'plot_seaGrid_histogram_sea_Lmax_' + nom+'.svg'
+    string_name_file = './' + par.plots_dir + 'plot_seaGrid_histogram_sea_Lmax_' + nom+'.png'
+    #string_name_file = './' + par.plots_dir + 'plot_seaGrid_histogram_sea_Lmax_' + nom+'.svg'
     plt.savefig(string_name_file,  bbox_inches = 'tight')
 
 
@@ -326,8 +327,6 @@ def plot_land_resources_used(par, lim, M, nom, which_par):
         ax.set_xlabel("$S^{max}$")
         x =  np.arange(lim.high_sea_min, lim.high_sea_max, lim.high_sea_step)
     
-
-
     max_matrice = max(map(max, M))
     min_matrice = min(map(min, M))
     print ('max', max_matrice)
@@ -368,11 +367,8 @@ def plot_land_resources_used(par, lim, M, nom, which_par):
     plt.colorbar(matrice)
     #plt.rcParams['animation.ffmpeg_path'] = '/usr/bin/ffmpeg'
        
-    string_name_file = '../' + par.plot_dir + 'plot4_landGrid/histogram_land_Lmax_' + nom+'.png'
+    string_name_file = './' + par.plots_dir + 'plot4_landGrid/histogram_land_Lmax_' + nom+'.png'
     plt.savefig(string_name_file,  bbox_inches = 'tight')
-
-
-
 
 def plot_jumps_matrix(par, lim, M, nom):
 
@@ -418,35 +414,35 @@ def plot_jumps_matrix(par, lim, M, nom):
     plt.colorbar(matrice)
     #plt.rcParams['animation.ffmpeg_path'] = '/usr/bin/ffmpeg'
        
-    string_name_file = '../' + par.plot_dir + 'histogram_jump_Lmax_' + nom+'.png'
+    string_name_file = './' + par.plots_dir + 'histogram_jump_Lmax_' + nom+'.png'
     plt.savefig(string_name_file,  bbox_inches = 'tight')
 
 
-def plot_2jumps_vectors(par, jumpVectors, nom):
+def plot_2jumps_vectors(par, burners_nums, jumpVectors, nom):
 
     fig, ax = plt.subplots()
 
-    ax.set_ylabel(" Average Movements ")
+    ax.set_ylabel("Average Movements")
     ax.set_xlabel("HFG Number")
 
-    
+    print( 'whaaaaat', burners_nums, jumpVectors.T[0])
     #plt.plot(par.n_consumers, MovVectors[0], color="orange", 'o', markersize=8)
-    plt.plot(par.n_consumers, jumpVectors[0], ls = '--', color="magenta", alpha = 0.5, label = r'$S_d = 0.25$')
+    plt.plot(burners_nums, jumpVectors.T[0], ls = '--', color="magenta", alpha = 0.5, label = r'$S_d = 0.25$')
     #plt.plot(par.n_consumers, MovVectors[1], color="blue", '+', markersize=8)
-    plt.plot(par.n_consumers, jumpVectors[1], ls = '-.', color="magenta", label = r'$S_d = 0.4$')
+    plt.plot(burners_nums, jumpVectors.T[1], ls = '-.', color="magenta", label = r'$S_d = 0.4$')
     plt.legend(frameon = False)
        
-    string_name_file = '../' + par.plot_dir + '2jump_vectors_' + nom+'.png'
+    string_name_file = './' + par.plots_dir + '2jump_vectors_' + nom+'.png'
     plt.savefig(string_name_file,  bbox_inches = 'tight')
-    #string_name_file = '../' + par.plot_dir + '2jump_vectors_' + nom+'.svg'
+    #string_name_file = './' + par.plots_dir + '2jump_vectors_' + nom+'.svg'
     #plt.savefig(string_name_file,  bbox_inches = 'tight')
     
 
-def name_file(par, var, name):
+def name_file(par, name):
     
     characteristics = 'burn'+ '{:2}'.format(par.n_consumers)+'_cells'+ '{:2}'.format(par.length)+\
-                    '_t'+ '{:3}'.format(par.time)+'_hL'+'{:1}'.format(var.high_land)+'_hS'+\
-                    '{:}'.format(var.high_sea)+'_Lp'+ '{:.1f}'.format(var.land_productivity)+\
-                    '_tD' + '{:.1f}'.format(var.tidal_deluge)
+                    '_t'+ '{:3}'.format(par.time)+'_hL'+'{:1}'.format(par.high_land)+'_hS'+\
+                    '{:}'.format(par.high_sea)+'_Lp'+ '{:.1f}'.format(par.land_productivity)+\
+                    '_tD' + '{:.1f}'.format(par.tidal_deluge)
     
     return name +'_'+ characteristics
