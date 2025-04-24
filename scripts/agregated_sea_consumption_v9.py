@@ -107,15 +107,16 @@ def consume(burning, land, sea ):
         return new_land, sea
     
     elif land + sea > burning:
-        new_land = land/10.
-        new_sea = sea - (burning - land + land/10.)
+        new_land = par.min_land
+        new_sea = sea - (burning - land + par.min_land)
         consumed = sea-new_sea + land - new_land
         #print('consume sea and land', '{:2.2f}'.format(land), '{:.2f}'.format(new_land), '{:.2f}'.format(sea), '{:.2f}'.format(new_sea), consumed )
         return new_land, new_sea
     
     else:
+        new_land = par.min_land
         #print('consume leftover fuel', '{:2.2f}'.format(land), '{:2.2f}'.format(sea), 0 )
-        return land, 0
+        return new_land, 0
     
 
 def accumulated_burnings(par, land_fuel, sea_fuel):    
@@ -123,6 +124,7 @@ def accumulated_burnings(par, land_fuel, sea_fuel):
     
     this is the mean sea burning by all the agents through all the time, after a burnout 
     period is removed'''
+
     land_matrix = np.matrix(np.array(land_fuel[par.burn_frames:]))
     all_land = np.matrix.sum(land_matrix)/(len(land_fuel[par.burn_frames:])*par.n_consumers)
 
@@ -139,16 +141,21 @@ def accumulated_n_jumps(par, positions):
     period is removed'''
 
     # understand why increasing the number of burners reduces the movility after a certain amount
-    # Hypothesis 1, np.sum(l != pos_matrix[i+1]) works differently than I expected
     # Hypothesis 2, something in the thresholds of my code make the agents not move once thre are little resources in the est of the cells.
     
-    pos_matrix = np.matrix(np.array(positions[par.burn_frames:]))
+    pos_matrix = np.array(positions[par.burn_frames:])
     #print('jump matrix', pos_matrix)
     total_jumps = 0
-
+  
     for i, l in enumerate(pos_matrix):
         if i < len(pos_matrix)-1:
-            time_jumps = np.sum(l != pos_matrix[i+1])
+            #time_jumps = np.sum(l != pos_matrix[i+1])
+            
+            time_jumps = len(l)-np.sum(l == pos_matrix[i+1])
+            #print( '\nllllllll', np.array(l))
+            #print( 'llllllll', pos_matrix[i+1])
+            #print(len(l), len(pos_matrix[i+1]), 'sum', np.sum(l == pos_matrix[i+1]))
+            #print('time jumps', time_jumps, total_jumps, '\n')
         total_jumps = total_jumps + time_jumps
         
     norm_jumps = total_jumps/(len(positions[par.burn_frames:])*par.n_consumers)
@@ -213,9 +220,9 @@ def move_burner(i, burner_pos, land_arr, burners, R):
     Returns:
     list: Updated agent positions.
     """
+
     new_positions = burners.copy()
 
-    
     # Define the range to search within radius R
     start = max(0, burner_pos - R)
     end = min(len(land_arr), burner_pos + R + 1)
@@ -227,10 +234,20 @@ def move_burner(i, burner_pos, land_arr, burners, R):
     for pos in range(start, end):
         
         if pos not in new_positions and land_arr[pos] == max_value:
-            #print ('position', pos, ' buner number ', i )
             #max_value = land_arr[pos]
             best_position = pos
-
+            #print('best position', best_position, ' best choice ', land_arr[pos], max_value )
+    
+    if best_position == burner_pos:
+        #print('lost position', best_position, ' possible choices ', land_arr[start:end], land_arr[burner_pos], max_value )
+        rand_position = random.choice(np.arange(start, end))
+        while rand_position  in new_positions:
+            rand_position = random.choice(np.arange(start, end))
+            start = max(0, start -1)
+            end = min(len(land_arr), end + 1)
+        #print('rand position', rand_position, ' choices ', np.arange(start, end), 'original pos', burner_pos)
+        best_position = rand_position
+               
     # Update the agent's position
     burners[i] = best_position
 

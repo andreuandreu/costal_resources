@@ -1,21 +1,18 @@
 from __future__ import division
 
 import numpy as np
+from subprocess import call
+from scipy.ndimage.interpolation import shift
 
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
-
-from scipy.ndimage.interpolation import shift
 import matplotlib.animation as animation
 import matplotlib
-from subprocess import call
 import matplotlib.ticker as ticker
-
 import matplotlib.cm as pltcm
-import matplotlib.ticker as ticker
 from matplotlib.ticker import FormatStrFormatter
+from matplotlib.ticker import MaxNLocator
 
-import config as cfg
 
 
 def matrix_movie(par, M, position, nom):
@@ -242,26 +239,25 @@ def plot3_1cell_resources(par, sea, land, name):
     #name_sea = './' + par.plots_dir + 'plot_3-1cell_resources_'+ name + '.png'
     plt.savefig(name_sea,  bbox_inches = 'tight')
     plt.show()
-
-
-
-def plot_sea_resources_used(par, lim, M, nom, which_par):
     
+
+def prerpare_plot(lim, M, which_par):
+
     fig, ax = plt.subplots()#111, 'matrix movie'
 
-    ax.set_ylabel("HFG Number")
+    ax.set_ylabel("HFG Number $n_b$")
 
     if which_par == 'land_productivity':
-        ax.set_xlabel("$L_{p}$")
+        ax.set_xlabel("Land Productivity $L_{p}$")
         x =  np.arange(lim.min_land_prod, lim.max_land_prod, lim.prod_step)
     elif which_par == 'high_land':
-        ax.set_xlabel("$L^{max}$")
+        ax.set_xlabel("Maximum Land $L^{max}$")
         x =  np.arange(lim.high_land_min, lim.high_land_max, lim.Lhigh_step)
     elif which_par == 'tidal_deluge': 
-        ax.set_xlabel("$S_{d}$")
+        ax.set_xlabel("Tidal Deposition $S_{d}$")
         x =  np.arange(lim.min_tidal_deluge, lim.max_tidal_deluge, lim.tidal_deluge_step)
     elif which_par == 'high_sea':    
-        ax.set_xlabel("$S^{max}$")
+        ax.set_xlabel("Maximum Sea $S^{max}$")
         x =  np.arange(lim.high_sea_min, lim.high_sea_max, lim.high_sea_step)
     
     max_matrice = max(map(max, M))
@@ -269,7 +265,36 @@ def plot_sea_resources_used(par, lim, M, nom, which_par):
 
     print ('max', max_matrice)
     print ('final M Sea', '\n', M)
- 
+
+    nx = x.shape[0]
+    n_labels = len(x)-1
+    step_x = int(nx / (n_labels - 1))
+    x_positions = np.arange(0, nx, step_x )
+    float_formatter = "{:.2f}".format
+    np.set_printoptions(formatter={'float_kind':float_formatter})
+    x_labels = x[::step_x]#"{:10.4f}".format(x)
+    for i,xx in enumerate(x):
+        x_labels[i] = "{:.2f}".format(xx)
+
+    #ticks_y = ticker.FuncFormatter(lambda y, pos: '{0:.1f}'.format(y))
+    #ax.yaxis.set_major_formatter(ticks_y)
+
+    y =  np.arange(lim.min_consumers, lim.max_consumers, lim.con_step)
+    ny = y.shape[0]
+    n_ylabels = len(y)-1
+    step_y = int(ny / (n_ylabels - 1))
+    y_positions = np.arange(0, ny, step_y )
+    y_labels = y[::step_y]
+    #ticks_y = ticker.FuncFormatter(lambda y, pos: '{0:.1f}'.format(y))
+    #ax.yaxis.set_major_formatter(ticks_y)
+
+    return ax, max_matrice, min_matrice, x_positions, x_labels, y_positions, y_labels
+
+
+def plot_sea_resources_used(par, lim, M, nom, which_par):
+
+    ax, max_matrice, min_matrice, x_positions, x_labels, y_positions, y_labels = prerpare_plot(lim, M, which_par)
+
     normalize = matplotlib.colors.Normalize(vmin=min_matrice, vmax=max_matrice)
     #matrice = ax.matshow(M, cmap = cm.Blues, norm = normalize, extent = [lim.min_land_prod, lim.max_land_prod, lim.min_consumers, lim.max_consumers ])
     #matrice = ax.imshow(M, cmap = cm.Blues, norm = normalize, interpolation = 'none')#extent = [lim.min_land_prod, lim.max_land_prod, lim.max_consumers, lim.min_consumers ]
@@ -277,159 +302,69 @@ def plot_sea_resources_used(par, lim, M, nom, which_par):
     cmap = cm.get_cmap('Blues', 5)    # 6 discrete colors
     matrice = ax.pcolormesh(M, cmap = cmap, norm = normalize)#extent = [lim.min_land_prod, lim.max_land_prod, lim.max_consumers, lim.min_consumers ]
 
-    nx = x.shape[0]
-    n_labels = len(x)-1
-    step_x = int(nx / (n_labels - 1))
-    x_positions = np.arange(0, nx, step_x )
-    float_formatter = "{:.2f}".format
-    np.set_printoptions(formatter={'float_kind':float_formatter})
-    x_labels = x[::step_x]#"{:10.4f}".format(x)
-    for i,xx in enumerate(x):
-        x_labels[i] = "{:.2f}".format(xx)
 
-    #ticks_y = ticker.FuncFormatter(lambda y, pos: '{0:.1f}'.format(y))
-    #ax.yaxis.set_major_formatter(ticks_y)
+
     plt.xticks(x_positions, x_labels)
-
-    y =  np.arange(lim.min_consumers, lim.max_consumers, lim.con_step)
-    ny = y.shape[0]
-    n_ylabels = len(y)-1
-    step_y = int(ny / (n_ylabels - 1))
-    y_positions = np.arange(0, ny, step_y )
-    y_labels = y[::step_y]
-    #ticks_y = ticker.FuncFormatter(lambda y, pos: '{0:.1f}'.format(y))
-    #ax.yaxis.set_major_formatter(ticks_y)
     plt.yticks(y_positions, y_labels)
     
     plt.colorbar(matrice)
-    #plt.rcParams['animation.ffmpeg_path'] = '/usr/bin/ffmpeg'
+
        
-    string_name_file = './' + par.plots_dir + 'plot_seaGrid_histogram_sea_Lmax_' + nom+'.png'
-    #string_name_file = './' + par.plots_dir + 'plot_seaGrid_histogram_sea_Lmax_' + nom+'.svg'
+    string_name_file = './' + par.plots_dir + 'Grid_sea_Lmax_' + nom+'.png'
+    #string_name_file = './' + par.plots_dir + 'Grid_sea_Lmax_' + nom+'.svg'
     plt.savefig(string_name_file,  bbox_inches = 'tight')
 
 
 def plot_land_resources_used(par, lim, M, nom, which_par):
-    fig, ax = plt.subplots()#111, 'matrix movie'
 
-    ax.set_ylabel("HFG Number ")
-    
-    if which_par == 'land_productivity':
-        ax.set_xlabel("$L_{p}$")
-        x =  np.arange(lim.min_land_prod, lim.max_land_prod, lim.prod_step)
-    elif which_par == 'high_land':
-        ax.set_xlabel("$L^{max}$")
-        x =  np.arange(lim.high_land_min, lim.high_land_max, lim.Lhigh_step)
-    elif which_par == 'tidal_deluge': 
-        ax.set_xlabel("$S_{d}$")
-        x =  np.arange(lim.min_tidal_deluge, lim.max_tidal_deluge, lim.tidal_deluge_step)
-    elif which_par == 'high_sea':    
-        ax.set_xlabel("$S^{max}$")
-        x =  np.arange(lim.high_sea_min, lim.high_sea_max, lim.high_sea_step)
-    
-    max_matrice = max(map(max, M))
-    min_matrice = min(map(min, M))
-    print ('max', max_matrice)
-    print ('final M land', '\n', M)
+    ax, max_matrice, min_matrice, x_positions, x_labels, y_positions, y_labels = prerpare_plot(lim, M, which_par)
  
     normalize = matplotlib.colors.Normalize(vmin=min_matrice, vmax=max_matrice)
-    #matrice = ax.matshow(M, cmap = cm.Blues, norm = normalize, extent = [lim.min_land_prod, lim.max_land_prod, lim.min_consumers, lim.max_consumers ])
-    #matrice = ax.imshow(M, cmap = cm.Blues, norm = normalize, interpolation = 'none')#extent = [lim.min_land_prod, lim.max_land_prod, lim.max_consumers, lim.min_consumers ]
     
     cmap = cm.get_cmap('OrRd', 5)    # 6 discrete colors
     matrice = ax.pcolormesh(M, cmap = cmap, norm = normalize)#extent = [lim.min_land_prod, lim.max_land_prod, lim.max_consumers, lim.min_consumers ]
-
-
-    nx = x.shape[0]
-    n_labels = len(x)-1
-    step_x = int(nx / (n_labels - 1))
-    x_positions = np.arange(0, nx, step_x )
-    float_formatter = "{:.2f}".format
-    np.set_printoptions(formatter={'float_kind':float_formatter})
-    x_labels = x[::step_x]#"{:10.4f}".format(x)
-    for i,xx in enumerate(x):
-        x_labels[i] = "{:.2f}".format(xx)
-
-    #ticks_y = ticker.FuncFormatter(lambda y, pos: '{0:.1f}'.format(y))
-    #ax.yaxis.set_major_formatter(ticks_y)
-    plt.xticks(x_positions, x_labels)
-
-    y =  np.arange(lim.min_consumers, lim.max_consumers, lim.con_step)
-    ny = y.shape[0]
-    n_ylabels = len(y)-1
-    step_y = int(ny / (n_ylabels - 1))
-    y_positions = np.arange(0, ny, step_y )
-    y_labels = y[::step_y]
-    #ticks_y = ticker.FuncFormatter(lambda y, pos: '{0:.1f}'.format(y))
-    #ax.yaxis.set_major_formatter(ticks_y)
-    plt.yticks(y_positions, y_labels)
     
+    plt.xticks(x_positions, x_labels)
+    plt.yticks(y_positions, y_labels)
     plt.colorbar(matrice)
-    #plt.rcParams['animation.ffmpeg_path'] = '/usr/bin/ffmpeg'
+
        
-    string_name_file = './' + par.plots_dir + 'plot4_landGrid/histogram_land_Lmax_' + nom+'.png'
+    string_name_file = './' + par.plots_dir + 'Grid_land_Lmax_' + nom+'.png'
     plt.savefig(string_name_file,  bbox_inches = 'tight')
 
-def plot_jumps_matrix(par, lim, M, nom):
+def plot_jumps_matrix(par, lim, M, nom, which_par):
 
-    fig, ax = plt.subplots()#111, 'matrix movie'
-
-    ax.set_ylabel("HFG Number ")
-    #ax.set_xlabel("$L_{max}$")
-    ax.set_xlabel("$L_{p}$")
-
-    ax.xaxis.set_major_formatter(FormatStrFormatter('%.2f'))
-
-    max_matrice = max(map(max, M))
-    print ('max', max_matrice)
-    print ('final M jumps', '\n', M)
+    ax, max_matrice, min_matrice, x_positions, x_labels, y_positions, y_labels = prerpare_plot(lim, M, which_par)
+    #ax.xaxis.set_major_formatter(FormatStrFormatter('%.2f'))
  
     normalize = matplotlib.colors.Normalize(vmin=0, vmax=max_matrice)
    
-    #cmap = cm.get_cmap('PuRd', 5) 
-    cmap = cm.get_cmap('Greens', 5)    # 6 discrete colors
+    cmap = cm.get_cmap('PuRd', 5) 
+    #cmap = cm.get_cmap('Greens', 5)    # 6 discrete colors
     matrice = ax.pcolormesh(M, cmap = cmap, norm = normalize)#extent = [lim.min_land_prod, lim.max_land_prod, lim.max_consumers, lim.min_consumers ]
 
-    #x =  np.arange(lim.min_land_max, lim.max_land_max, lim.Lmax_step)
-    x =  np.arange(lim.min_land_prod, lim.max_land_prod, lim.prod_step)
-    nx = x.shape[0]
-    n_labels = len(x)-1
-    step_x = int(nx / (n_labels - 1))
-    x_positions = np.arange(0, nx, step_x )
-    x_labels = x[::step_x]
-    for i,xx in enumerate(x):
-        x_labels[i] = "{:.2f}".format(xx)
     plt.xticks(x_positions, x_labels)
-
-    y =  np.arange(lim.min_consumers, lim.max_consumers, lim.con_step)
-    ny = y.shape[0]
-    n_ylabels = len(y)-1
-    step_y = int(ny / (n_ylabels - 1))
-    y_positions = np.arange(0, ny, step_y )
-    y_labels = y[::step_y]
-    #ticks_y = ticker.FuncFormatter(lambda y, pos: '{0:.1f}'.format(y))
-    #ax.yaxis.set_major_formatter(ticks_y)
     plt.yticks(y_positions, y_labels)
-    
     plt.colorbar(matrice)
-    #plt.rcParams['animation.ffmpeg_path'] = '/usr/bin/ffmpeg'
        
-    string_name_file = './' + par.plots_dir + 'histogram_jump_Lmax_' + nom+'.png'
+    string_name_file = './' + par.plots_dir + 'Grid_jump_Lmax_' + nom+'.png'
     plt.savefig(string_name_file,  bbox_inches = 'tight')
 
+def plot_2jumps_vectors(par, lim, burners_nums, jumpVectors, nom):
 
-def plot_2jumps_vectors(par, burners_nums, jumpVectors, nom):
-
-    fig, ax = plt.subplots()
+    #fig, ax = plt.subplots()
+    ax = plt.figure().gca()
 
     ax.set_ylabel("Average Movements")
-    ax.set_xlabel("HFG Number")
+    ax.set_xlabel(r"HFG Number ($n_b$)")
 
-    print( 'whaaaaat', burners_nums, jumpVectors.T[0])
-    #plt.plot(par.n_consumers, MovVectors[0], color="orange", 'o', markersize=8)
-    plt.plot(burners_nums, jumpVectors.T[0], ls = '--', color="magenta", alpha = 0.5, label = r'$S_d = 0.25$')
-    #plt.plot(par.n_consumers, MovVectors[1], color="blue", '+', markersize=8)
-    plt.plot(burners_nums, jumpVectors.T[1], ls = '-.', color="magenta", label = r'$S_d = 0.4$')
+
+    ax.xaxis.set_major_locator(MaxNLocator(integer=True))   
+
+    #plt.plot(burners_nums, jumpVectors.T[0], ls = '--', color="magenta", alpha = 0.5)
+    plt.plot(burners_nums, jumpVectors.T[0], 'o', color="magenta", alpha = 0.5, markersize=8, label = r'Sea deposition: $S_d = $'+ format(lim.medium_tidal_deluge, '.2f'))
+    #plt.plot(burners_nums, jumpVectors.T[1], ls = '-.', color="magenta", label = r'$S_d = $'+ format(lim.high_tidal_deluge, '.2f'))
+    plt.plot(burners_nums, jumpVectors.T[1], '*', color="magenta",  markersize=8, label = r'Sea deposition: $S_d = $'+ format(lim.high_tidal_deluge, '.2f'))
     plt.legend(frameon = False)
        
     string_name_file = './' + par.plots_dir + '2jump_vectors_' + nom+'.png'
