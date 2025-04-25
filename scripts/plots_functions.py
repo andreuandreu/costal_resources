@@ -310,8 +310,8 @@ def plot_sea_resources_used(par, lim, M, nom, which_par):
     plt.colorbar(matrice)
 
        
-    string_name_file = './' + par.plots_dir + 'Grid_sea_Lmax_' + nom+'.png'
-    #string_name_file = './' + par.plots_dir + 'Grid_sea_Lmax_' + nom+'.svg'
+    string_name_file = './' + par.plots_dir + 'Grid_sea_Lmax_' + which_par + nom +'.png'
+    #string_name_file = './' + par.plots_dir + 'Grid_sea_Lmax_' + which_par + nom +'.svg'
     plt.savefig(string_name_file,  bbox_inches = 'tight')
 
 
@@ -329,7 +329,7 @@ def plot_land_resources_used(par, lim, M, nom, which_par):
     plt.colorbar(matrice)
 
        
-    string_name_file = './' + par.plots_dir + 'Grid_land_Lmax_' + nom+'.png'
+    string_name_file = './' + par.plots_dir + 'Grid_land_Lmax_' + which_par + nom +'.png'
     plt.savefig(string_name_file,  bbox_inches = 'tight')
 
 def plot_jumps_matrix(par, lim, M, nom, which_par):
@@ -347,7 +347,7 @@ def plot_jumps_matrix(par, lim, M, nom, which_par):
     plt.yticks(y_positions, y_labels)
     plt.colorbar(matrice)
        
-    string_name_file = './' + par.plots_dir + 'Grid_jump_Lmax_' + nom+'.png'
+    string_name_file = './' + par.plots_dir + 'Grid_jump_Lmax_' + which_par + nom +'.png'
     plt.savefig(string_name_file,  bbox_inches = 'tight')
 
 def plot_2jumps_vectors(par, lim, burners_nums, jumpVectors, nom):
@@ -356,6 +356,28 @@ def plot_2jumps_vectors(par, lim, burners_nums, jumpVectors, nom):
     ax = plt.figure().gca()
 
     ax.set_ylabel("Average Movements")
+    ax.set_xlabel(r"HFG Number ($n_b$)")
+
+
+    ax.xaxis.set_major_locator(MaxNLocator(integer=True))   
+
+    #plt.plot(burners_nums, jumpVectors.T[0], ls = '--', color="magenta", alpha = 0.5)
+    plt.plot(burners_nums, jumpVectors.T[0], 'o', color="magenta", alpha = 0.5, markersize=8, label = r'Sea deposition: $S_d = $'+ format(lim.medium_tidal_deluge, '.2f'))
+    #plt.plot(burners_nums, jumpVectors.T[1], ls = '-.', color="magenta", label = r'$S_d = $'+ format(lim.high_tidal_deluge, '.2f'))
+    plt.plot(burners_nums, jumpVectors.T[1], '*', color="magenta",  markersize=8, label = r'Sea deposition: $S_d = $'+ format(lim.high_tidal_deluge, '.2f'))
+    plt.legend(frameon = False)
+       
+    string_name_file = './' + par.plots_dir + '2jump_vectors_' + nom+'.png'
+    plt.savefig(string_name_file,  bbox_inches = 'tight')
+    #string_name_file = './' + par.plots_dir + '2jump_vectors_' + nom+'.svg'
+    #plt.savefig(string_name_file,  bbox_inches = 'tight')
+
+def plot_2radius_vectors(par, lim, burners_nums, jumpVectors, nom):
+
+    #fig, ax = plt.subplots()
+    ax = plt.figure().gca()
+
+    ax.set_ylabel("Average Range")
     ax.set_xlabel(r"HFG Number ($n_b$)")
 
 

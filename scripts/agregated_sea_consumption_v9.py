@@ -139,9 +139,6 @@ def accumulated_n_jumps(par, positions):
     
     this is the averaged by all the agents through all the time, after a burnout 
     period is removed'''
-
-    # understand why increasing the number of burners reduces the movility after a certain amount
-    # Hypothesis 2, something in the thresholds of my code make the agents not move once thre are little resources in the est of the cells.
     
     pos_matrix = np.array(positions[par.burn_frames:])
     #print('jump matrix', pos_matrix)
@@ -162,7 +159,19 @@ def accumulated_n_jumps(par, positions):
     #print ('\n all the jumps ', total_jumps, 'jump length', len(positions[par.burn_frames:]), norm_jumps, '\n')
    
     return norm_jumps
+
+def accumulated_mean_R(par, radius):    
+    '''computes the accumulated mean R per consumer after a burndown period
     
+    this is the averaged by all the agents through all the time, after a burnout 
+    period is removed'''
+
+    all_R = np.sum(np.array(radius[par.burn_frames:]))
+    #print ('all the radius', all_R, len(radius[par.burn_frames:]))
+    #print ('all the radius', radius[par.burn_frames:])
+    norm_R = all_R/(len(radius[par.burn_frames:])*par.n_consumers)#
+    
+    return norm_R
 
 def initialize_agents(n, s):
     """
@@ -197,15 +206,20 @@ def shake_burners(par, burners, land_arr, sea_arr):
 
     new_land_arr = np.copy(land_arr)
     new_sea_arr = np.copy(sea_arr)
+    radius = 0
 
     for i, pos in enumerate(burners):
-
+        #print('burner', i, 'position', pos)
+        R = par.radius
         if new_land_arr[pos] + new_sea_arr[pos] < par.burning_rate:
-            burners = move_burner(i, pos, new_land_arr, burners, par.radius)
-            
-        new_land_arr[pos], new_sea_arr[pos] = consume(par.burning_rate, new_land_arr[pos], new_sea_arr[pos] )
+            burners, R = move_burner(i, pos, new_land_arr, burners, par.radius)
+        #    radius = np.append(radius, R)    
+        #else:
+        radius = np.append(radius, R)
 
-    return burners, new_land_arr, new_sea_arr
+        new_land_arr[pos], new_sea_arr[pos] = consume(par.burning_rate, new_land_arr[pos], new_sea_arr[pos] )
+    #print('radiussss', radius)
+    return burners, new_land_arr, new_sea_arr, radius
 
 
 def move_burner(i, burner_pos, land_arr, burners, R):
@@ -237,21 +251,28 @@ def move_burner(i, burner_pos, land_arr, burners, R):
             #max_value = land_arr[pos]
             best_position = pos
             #print('best position', best_position, ' best choice ', land_arr[pos], max_value )
+            #R = abs(pos - burner_pos)
+            R = par.radius
+            break
     
-    if best_position == burner_pos:
+    if best_position == burner_pos and land_arr[pos] == max_value:
         #print('lost position', best_position, ' possible choices ', land_arr[start:end], land_arr[burner_pos], max_value )
         rand_position = random.choice(np.arange(start, end))
-        while rand_position  in new_positions:
+        while rand_position  in new_positions and land_arr[pos] == max_value:
+            max_value = max(land_arr[start:end])+par.min_land
             rand_position = random.choice(np.arange(start, end))
             start = max(0, start -1)
             end = min(len(land_arr), end + 1)
+            
+            #best_position = rand_position
         #print('rand position', rand_position, ' choices ', np.arange(start, end), 'original pos', burner_pos)
         best_position = rand_position
+        R = (end - start)/2
                
     # Update the agent's position
     burners[i] = best_position
 
-    return burners
+    return burners, R
 
 def main(par):
 
@@ -272,13 +293,14 @@ def main(par):
     burned_land_mat = np.zeros(par.length)
     burned_sea_mat = np.zeros(par.length)
     positions = burners
+    radius_memo = np.zeros(par.n_consumers+1)
     
     print('\n N HFG/Burners:' , par.n_consumers, ' \n')
    
     for t in range(par.time):
         #print(f"t{t}:Agent Positions: {burners}")
         #print(f"land fuel {land_arr}:'\n sea fuel: {sea_arr}\n")
-        burners, new_land_arr, new_sea_arr = shake_burners(par, burners, land_arr, sea_arr)            
+        burners, new_land_arr, new_sea_arr, Rs = shake_burners(par, burners, land_arr, sea_arr)            
         
         burned_land = sum(land_arr - new_land_arr)
         burned_sea = sum(sea_arr - new_sea_arr)
@@ -299,10 +321,15 @@ def main(par):
         land_fuel_levels = np.vstack([land_fuel_levels, land_arr])
         sea_fuel_levels = np.vstack([sea_fuel_levels, sea_arr])
         positions = np.vstack([positions, burners])
+        
+        #print('radiusmeme', Rs, radius_memo, len(radius_memo), len(Rs))
+        radius_memo = np.vstack([radius_memo, Rs])
+        #radius = np.vstack([radius, Rs])
 
 
     norm_burned_land, norm_burned_sea = accumulated_burnings(par, burned_land_memo, burned_sea_memo)
     norm_movements = accumulated_n_jumps(par, positions)
+    norm_radius = accumulated_mean_R(par, radius_memo)
     #print( f" norm land fuel: {norm_burned_land}'\n norm sea fuel: {norm_burned_sea}\n" )
     #print( f" all land fuel: {sum(burned_land_memo)}'\n all sea fuel: {sum(burned_sea_memo)}\n" )
     #print( f" all sea fuel: {all_sea}'\n all sea fuel: {all_sea}\n" )
@@ -311,7 +338,7 @@ def main(par):
     #pf.plot3_1cell_resources(par, sea_fuel_levels, land_fuel_levels,  'nom')
     #pf.vector_movie(par, land_fuel_levels, sea_fuel_levels, movements,  'nom')
 
-    return norm_burned_land, norm_burned_sea, norm_movements
+    return norm_burned_land, norm_burned_sea, norm_movements, norm_radius
 
 par = cfg.par()
 if __name__ == "__main__":
