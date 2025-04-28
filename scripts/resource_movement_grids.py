@@ -133,11 +133,13 @@ def main():
     lim = cfg.limits()
     par = cfg.par()
     
-    consumers_parameter, change_par  = generate_grid(lim, which_par)
-    matrix_sea_consumption, matrix_land_consumption, matrix_jumps, matrix_radius = run_the_grid(par, consumers_parameter, change_par, which_par)
+    #consumers_parameter, change_par  = generate_grid(lim, which_par)
+    #matrix_sea_consumption, matrix_land_consumption, matrix_jumps, matrix_radius = run_the_grid(par, consumers_parameter, change_par, which_par)
     #pf.plot_sea_resources_used(par, lim, matrix_sea_consumption, name, which_par)
     #pf.plot_land_resources_used(par, lim, matrix_land_consumption,  name, which_par)
     #pf.plot_jumps_matrix(par, lim, matrix_jumps, name, which_par)
+    #Mats = [matrix_sea_consumption, matrix_land_consumption, matrix_jumps, matrix_radius]
+    #pf.tri_plotSeaLandJumps(par, lim, Mats, name, which_par)
 
     consumers_parameter, low_land_mediumNhigh_sea = settings_mobility_seaFuels(par, lim)
     vectors_sea_consumption, vectors_land_consumption, vectors_jumps, vectors_radius =\

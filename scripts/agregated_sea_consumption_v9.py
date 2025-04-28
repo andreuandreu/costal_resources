@@ -173,6 +173,12 @@ def accumulated_mean_R(par, radius):
     
     return norm_R
 
+
+def maximum_R(par, radius):    
+
+    max_R = np.max(np.array(radius[par.burn_frames:]))
+    return max_R
+
 def initialize_agents(n, s):
     """
     Randomly initializes the positions of n agents within the array indices.
@@ -212,7 +218,7 @@ def shake_burners(par, burners, land_arr, sea_arr):
         #print('burner', i, 'position', pos)
         R = par.radius
         if new_land_arr[pos] + new_sea_arr[pos] < par.burning_rate:
-            burners, R = move_burner(i, pos, new_land_arr, burners, par.radius)
+            burners, R = move_burner(i, pos, new_land_arr, new_sea_arr, burners, par.radius)
         #    radius = np.append(radius, R)    
         #else:
         radius = np.append(radius, R)
@@ -222,7 +228,7 @@ def shake_burners(par, burners, land_arr, sea_arr):
     return burners, new_land_arr, new_sea_arr, radius
 
 
-def move_burner(i, burner_pos, land_arr, burners, R):
+def move_burner(i, burner_pos, land_arr, sea_arr, burners, R):
     """
     Moves one agent to the maximum value in a radius R that is not occupied.
 
@@ -258,7 +264,7 @@ def move_burner(i, burner_pos, land_arr, burners, R):
     if best_position == burner_pos and land_arr[pos] == max_value:
         #print('lost position', best_position, ' possible choices ', land_arr[start:end], land_arr[burner_pos], max_value )
         rand_position = random.choice(np.arange(start, end))
-        while rand_position  in new_positions and land_arr[pos] == max_value:
+        while rand_position  in new_positions and land_arr[pos]  <= par.burning_rate/2:#max_value+ sea_arr[pos]
             max_value = max(land_arr[start:end])+par.min_land
             rand_position = random.choice(np.arange(start, end))
             start = max(0, start -1)
@@ -267,7 +273,9 @@ def move_burner(i, burner_pos, land_arr, burners, R):
             #best_position = rand_position
         #print('rand position', rand_position, ' choices ', np.arange(start, end), 'original pos', burner_pos)
         best_position = rand_position
-        R = (end - start)/2
+        #R = (end - start)/2
+        R = abs(burner_pos - best_position)
+
                
     # Update the agent's position
     burners[i] = best_position
@@ -330,6 +338,7 @@ def main(par):
     norm_burned_land, norm_burned_sea = accumulated_burnings(par, burned_land_memo, burned_sea_memo)
     norm_movements = accumulated_n_jumps(par, positions)
     norm_radius = accumulated_mean_R(par, radius_memo)
+    max_R = maximum_R(par, radius_memo)
     #print( f" norm land fuel: {norm_burned_land}'\n norm sea fuel: {norm_burned_sea}\n" )
     #print( f" all land fuel: {sum(burned_land_memo)}'\n all sea fuel: {sum(burned_sea_memo)}\n" )
     #print( f" all sea fuel: {all_sea}'\n all sea fuel: {all_sea}\n" )
@@ -338,7 +347,7 @@ def main(par):
     #pf.plot3_1cell_resources(par, sea_fuel_levels, land_fuel_levels,  'nom')
     #pf.vector_movie(par, land_fuel_levels, sea_fuel_levels, movements,  'nom')
 
-    return norm_burned_land, norm_burned_sea, norm_movements, norm_radius
+    return norm_burned_land, norm_burned_sea, norm_movements, max_R
 
 par = cfg.par()
 if __name__ == "__main__":

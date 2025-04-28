@@ -13,7 +13,7 @@ class par:
 
     '''configuration of the simulation'''
     length = 44#length of the land area in cells
-    time = 266#max time 
+    time = 666#max time 
     t_step_lenth = 0.5 # lenth of temporal steps
 
     burning_rate = 1  #burning rate, this has to be 1 as all the rest will be normalized to these units.
