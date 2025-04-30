@@ -8,17 +8,18 @@ class par:
     high_land = 5#30 # maximum amount for the maximum capacity land cell, in burning rate units. 
     high_sea = 5#initial condition on land combustible, in burning rate units. 
     
-    land_productivity = 0.2# constant for the productivity of land, in burning rate units.  
+    land_productivity = 0.1# constant for the productivity of land, in burning rate units.  
     tidal_deluge = 0.4 #amount of recovery of sea fuel, multiplictive factor of intitial conditions 
 
     '''configuration of the simulation'''
     length = 44#length of the land area in cells
-    time = 666#max time 
+    time = 366#max time 
+    runs = 33
     t_step_lenth = 0.5 # lenth of temporal steps
 
     burning_rate = 1  #burning rate, this has to be 1 as all the rest will be normalized to these units.
     
-    radius = 3 # maximum number of cells that the consumer can move in one jump
+    radius = 2 # maximum number of cells that the consumer can move in one jump
     n_consumers = 21# number of consumers
     min_land = 0.1*burning_rate# minimum amount of land fuel always present but negligible
 
@@ -31,7 +32,7 @@ class par:
 class limits:
     min_consumers = 2
     max_consumers = 22
-    con_step = 2
+    con_step = 1
 
     min_land_prod = 0.1
     max_land_prod = 0.33
@@ -49,8 +50,8 @@ class limits:
     high_sea_max = 16
     high_sea_step = 1.0
 
-    scarce_land_prod = 0.15
-    medium_tidal_deluge = 0.25
-    high_tidal_deluge = 0.4
+    scarce_land_prod = 0.05
+    medium_tidal_deluge = 0.15
+    high_tidal_deluge = 0.45
 
 

@@ -263,20 +263,32 @@ def move_burner(i, burner_pos, land_arr, sea_arr, burners, R):
     
     if best_position == burner_pos and land_arr[pos] == max_value:
         #print('lost position', best_position, ' possible choices ', land_arr[start:end], land_arr[burner_pos], max_value )
-        rand_position = random.choice(np.arange(start, end))
-        while rand_position  in new_positions and land_arr[pos]  <= par.burning_rate/2:#max_value+ sea_arr[pos]
-            max_value = max(land_arr[start:end])+par.min_land
-            rand_position = random.choice(np.arange(start, end))
+        new_position = random.choice(np.arange(start, end))
+        while new_position  in new_positions and land_arr[pos] + sea_arr[pos]  <= par.burning_rate:#max_value#burning_rate/2.min_land*2
+            #max_value = max(land_arr[start:end])+par.min_land
+            #rand_position = random.choice(np.arange(start, end))
+            diameter = end - start
             start = max(0, start -1)
             end = min(len(land_arr), end + 1)
-            
+            new_position = np.where(land_arr == max(land_arr[start:end]))[0][0]
+
+            if diameter > par.length-par.radius:
+                while new_position  in new_positions:
+                    new_position = random.choice(np.arange(start, end))
+                break
+
             #best_position = rand_position
         #print('rand position', rand_position, ' choices ', np.arange(start, end), 'original pos', burner_pos)
-        best_position = rand_position
+        #print('new position', new_position, 'type', type(new_position),  ' choices ', start, end, 'original pos', burner_pos)
+        #if type(new_position) != 'numpy.int64':
+        #    new_position = new_position[0]
+        best_position = new_position#rand_position
         #R = (end - start)/2
         R = abs(burner_pos - best_position)
 
-               
+    #if R > 8:
+    #    print('new position', new_position, 'type', type(new_position),  ' choices ', start, end, 'original pos', burner_pos)
+        
     # Update the agent's position
     burners[i] = best_position
 
@@ -303,7 +315,7 @@ def main(par):
     positions = burners
     radius_memo = np.zeros(par.n_consumers+1)
     
-    print('\n N HFG/Burners:' , par.n_consumers, ' \n')
+    #print('\n N HFG/Burners:' , par.n_consumers, ' \n')
    
     for t in range(par.time):
         #print(f"t{t}:Agent Positions: {burners}")

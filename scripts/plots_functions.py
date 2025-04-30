@@ -479,6 +479,34 @@ def plot_2jumps_vectors(par, lim, burners_nums, jumpVectors, nom):
     #string_name_file = './' + par.plots_dir + '2jump_vectors_' + nom+'.svg'
     #plt.savefig(string_name_file,  bbox_inches = 'tight')
 
+def plot_envelope_2jumps_vectors(par, lim, mean_values, min_values, max_values , nom):
+    
+# Create a figure and axes
+    fs = 14
+    fig, ax = plt.subplots(figsize=(8, 6))
+    ax.tick_params(axis='both', which='major', labelsize=12)
+
+    # Plot the ±1 sigma envelope and the mean
+    x = np.arange(lim.min_consumers, lim.max_consumers, lim.con_step)
+    lower_bound = np.ones(len(x)) * par.radius
+    
+    ax.fill_between(x, min_values[0], max_values[0] , color="magenta", alpha = 0.1, linewidth=0.0)
+    ax.plot(x, mean_values[0], lw = 2.0, ls = '--', color="magenta",label = r'Tidal deposition: $S_d = $'+ format(lim.medium_tidal_deluge, '.2f'))
+
+    ax.fill_between(x, min_values[1], max_values[1] , color="magenta", alpha = 0.3, linewidth=0.0)
+    ax.plot(x, mean_values[1], lw = 2.5,ls = ':', color="magenta",label = r'Tidal deposition: $S_d = $'+ format(lim.high_tidal_deluge, '.2f'))
+
+    # Add labels, legend, and title
+    ax.set_ylabel("Average Movements Distribution", fontsize=fs)
+    ax.set_xlabel(r"HFG Number ($n_b$)", fontsize=fs)
+    #ax.set_title('Mean and ±1 Sigma Envelope of Arrays')
+    ax.legend(frameon=False, fontsize=fs)
+
+    string_name_file = './' + par.plots_dir + '2jumps_vectors_dist' + nom+'.png'
+    plt.savefig(string_name_file,  bbox_inches = 'tight')
+    string_name_file = './' + par.plots_dir + '2jump_vectors_dist' + nom+'.svg'
+    plt.savefig(string_name_file,  bbox_inches = 'tight')
+
 def plot_2radius_vectors(par, lim, burners_nums, jumpVectors, nom):
 
     #fig, ax = plt.subplots()
@@ -500,6 +528,60 @@ def plot_2radius_vectors(par, lim, burners_nums, jumpVectors, nom):
     plt.savefig(string_name_file,  bbox_inches = 'tight')
     #string_name_file = './' + par.plots_dir + '2jump_vectors_' + nom+'.svg'
     #plt.savefig(string_name_file,  bbox_inches = 'tight')
+
+def plot_dist_2radius_vectors(par, lim, mean_values, std_dev, nom):
+    
+    # Create a figure and axes
+    fs = 16
+    fig, ax = plt.subplots(figsize=(8, 6))
+
+
+    # Plot the ±1 sigma envelope and the mean
+    x = np.arange(lim.min_consumers, lim.max_consumers, lim.con_step)
+    lower_bound = np.ones(len(x)) * par.radius
+    
+    ax.fill_between(x, lower_bound, mean_values[0] + std_dev[0] , color="brown", alpha = 0.5, linewidth=0.0)
+    ax.plot(x, mean_values[0], lw = 2.5, color="brown",label = r'Tidal deposition: $S_d = $'+ format(lim.medium_tidal_deluge, '.2f'))
+
+    ax.fill_between(x, lower_bound,  mean_values[1] + std_dev[1], color="olive", alpha = 0.5, linewidth=0.0)
+    ax.plot(x, mean_values[1], lw = 2.5, color="olive",label = r'Tidal deposition: $S_d = $'+ format(lim.high_tidal_deluge, '.2f'))
+
+    # Add labels, legend, and title
+    ax.set_ylabel("Maximum Range Distribution", fontsize=fs)
+    ax.set_xlabel(r"HFG Number ($n_b$)", fontsize=fs)
+    #ax.set_title('Mean and ±1 Sigma Envelope of Arrays')
+    ax.legend(frameon=False)
+
+    string_name_file = './' + par.plots_dir + '2range_vectors_dist' + nom+'.png'
+    plt.savefig(string_name_file,  bbox_inches = 'tight')
+    #string_name_file = './' + par.plots_dir + '2jump_vectors_' + nom+'.svg'
+    #plt.savefig(string_name_file,  bbox_inches = 'tight')
+
+def plot_envelope_2radius_vectors(par, lim, mean_values, min_values, max_values , nom):
+    
+# Create a figure and axes
+    fig, ax = plt.subplots(figsize=(8, 6))
+    ax.tick_params(axis='both', which='major', labelsize=12)
+    fs = 14
+    # Plot the ±1 sigma envelope and the mean
+    x = np.arange(lim.min_consumers, lim.max_consumers, lim.con_step)
+    lower_bound = np.ones(len(x)) * par.radius
+    
+    ax.fill_between(x, min_values[0]/par.length, max_values[0]/par.length , color="brown", alpha = 0.1, linewidth=0.0)
+    ax.plot(x, mean_values[0]/par.length, lw = 2.5, ls = '--', color="brown")
+
+    ax.fill_between(x, min_values[1]/par.length, max_values[1]/par.length , color="brown", alpha = 0.3, linewidth=0.0)
+    ax.plot(x, mean_values[1]/par.length, lw = 2.0, ls = ':', color="brown")
+
+    # Add labels, legend, and title
+    ax.set_ylabel("Maximum Range Distribution/landscape size", fontsize=fs)
+    ax.set_xlabel(r"HFG Number ($n_b$)", fontsize=fs)
+    #ax.set_title('Mean and ±1 Sigma Envelope of Arrays')
+
+    string_name_file = './' + par.plots_dir + '2range_vectors_dist' + nom+'.png'
+    plt.savefig(string_name_file,  bbox_inches = 'tight')
+    string_name_file = './' + par.plots_dir + '2jump_vectors_dist' + nom+'.svg'
+    plt.savefig(string_name_file,  bbox_inches = 'tight')
 
 def name_file(par, name):
     
