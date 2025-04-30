@@ -347,12 +347,68 @@ def prerpare_TriPlot(ax, lim, M, which_par, num):
 
     return max_matrice, min_matrice
 
+def prepare_QuadPlot(axes, lim, M, which_par, num):
+
+    fs = 16
+
+    if num == 0:
+        ax = axes[0, 0]
+        ax.set_xticks(x_positions, x_labels)
+        ax.set_yticks([])
+    elif num == 1:
+        ax = axes[0, 1]
+        ax.set_xticks([])
+        ax.set_yticks([])
+    elif num == 3:
+        ax = axes[1, 0]
+        ax.set_xticks(x_positions, x_labels)
+        ax.set_yticks(y_positions, y_labels)
+    elif num == 2:
+        ax = axes[1, 1]
+        ax.set_xticks([])
+        ax.set_yticks(y_positions, y_labels)
+
+    if which_par == 'land_productivity':
+        x =  np.arange(lim.min_land_prod, lim.max_land_prod, lim.prod_step)
+    elif which_par == 'high_land':
+        x =  np.arange(lim.high_land_min, lim.high_land_max, lim.Lhigh_step)
+    elif which_par == 'tidal_deluge': 
+        x =  np.arange(lim.min_tidal_deluge, lim.max_tidal_deluge, lim.tidal_deluge_step)
+    elif which_par == 'high_sea':    
+        x =  np.arange(lim.high_sea_min, lim.high_sea_max, lim.high_sea_step)
+    
+    max_matrice = max(map(max, M))
+    min_matrice = min(map(min, M))
+
+    nx = x.shape[0]
+    n_labels = len(x)-1
+    step_x = int(nx / (n_labels - 1))
+    x_positions = np.arange(0, nx, step_x )
+    float_formatter = "{:.2f}".format
+    np.set_printoptions(formatter={'float_kind':float_formatter})
+    x_labels = x[::step_x]#"{:10.4f}".format(x)
+    for i,xx in enumerate(x):
+        x_labels[i] = "{:.2f}".format(xx)
+
+    #ticks_y = ticker.FuncFormatter(lambda y, pos: '{0:.1f}'.format(y))
+    #ax.yaxis.set_major_formatter(ticks_y)
+
+    y =  np.arange(lim.min_consumers, lim.max_consumers, lim.con_step)
+    ny = y.shape[0]
+    n_ylabels = len(y)-1
+    step_y = int(ny / (n_ylabels - 1))
+    y_positions = np.arange(0, ny, step_y )
+    y_labels = y[::step_y]
+    #ticks_y = ticker.FuncFormatter(lambda y, pos: '{0:.1f}'.format(y))
+    #ax.yaxis.set_major_formatter(ticks_y)
+
+    return ax, max_matrice, min_matrice
+
 
 def plot_sea_resources_used(par, lim, M, nom, which_par):
 
     fig, ax = plt.subplots()#111, 'matrix movie'
     max_matrice, min_matrice, x_positions, x_labels, y_positions, y_labels = prerpare_plot(ax, lim, M, which_par)
-
 
     normalize = matplotlib.colors.Normalize(vmin=min_matrice, vmax=max_matrice)
     #matrice = ax.matshow(M, cmap = cm.Blues, norm = normalize, extent = [lim.min_land_prod, lim.max_land_prod, lim.min_consumers, lim.max_consumers ])
@@ -360,8 +416,6 @@ def plot_sea_resources_used(par, lim, M, nom, which_par):
     
     cmap = cm.get_cmap('Blues', 5)    # 6 discrete colors
     matrice = ax.pcolormesh(M, cmap = cmap, norm = normalize)#extent = [lim.min_land_prod, lim.max_land_prod, lim.max_consumers, lim.min_consumers ]
-
-
 
     plt.xticks(x_positions, x_labels)
     plt.yticks(y_positions, y_labels)
@@ -375,7 +429,6 @@ def plot_sea_resources_used(par, lim, M, nom, which_par):
 
 
 def plot_land_resources_used(par, lim, M, nom, which_par):
-
 
     fig, ax = plt.subplots()#111, 'matrix movie'
     ax, max_matrice, min_matrice, x_positions, x_labels, y_positions, y_labels = prerpare_plot(ax, lim, M, which_par)
@@ -394,7 +447,6 @@ def plot_land_resources_used(par, lim, M, nom, which_par):
     plt.savefig(string_name_file,  bbox_inches = 'tight')
 
 def plot_jumps_matrix(par, lim, M, nom, which_par):
-
 
     fig, ax = plt.subplots()#111, 'matrix movie'
     ax, max_matrice, min_matrice, x_positions, x_labels, y_positions, y_labels = prerpare_plot(ax, lim, M, which_par)
@@ -457,6 +509,34 @@ def tri_plotSeaLandJumps(par, lim, Mats, nom, which_par):
     plt.savefig(string_name_file,  bbox_inches = 'tight')
 
 
+def quad_plotSeaLandJumps(par, lim, Mats, nom, which_par):
+
+    # Create the triangular layout
+    num_matrices = len(Mats) -1
+    fig, axes = plt.subplots(num_matrices - 1, num_matrices - 1, figsize=(12, 10), constrained_layout=True)
+    
+
+    cmaps = [cm.get_cmap('Blues', 5), cm.get_cmap('OrRd', 5), cm.get_cmap('PuRd', 5) , cm.get_cmap('YlOrBr', 5)]
+    #which_par = ['land_productivity', 'high_land', 'tidal_deluge', 'high_sea']
+    ii = 0
+
+    
+    # Loop through the triangular arrangement
+    for i in range(num_matrices):
+
+        max_matrice, min_matrice, ax = prepare_QuadPlot(axes, lim, Mats[i], which_par, i)
+        normalize = matplotlib.colors.Normalize(vmin=min_matrice, vmax=max_matrice)
+        mesh = ax.pcolormesh(Mats[ii], cmap = cmaps[i], norm = normalize)
+        fig.colorbar(mesh)
+        ii += 1
+
+
+    # Adjust layout and show the plot
+    fig.subplots_adjust(wspace=0, hspace=0)
+    string_name_file = './' + par.plots_dir + 'Tri_Mat_' + which_par + nom +'.png'
+    plt.savefig(string_name_file,  bbox_inches = 'tight')
+
+
 def plot_2jumps_vectors(par, lim, burners_nums, jumpVectors, nom):
 
     #fig, ax = plt.subplots()
@@ -478,6 +558,29 @@ def plot_2jumps_vectors(par, lim, burners_nums, jumpVectors, nom):
     plt.savefig(string_name_file,  bbox_inches = 'tight')
     #string_name_file = './' + par.plots_dir + '2jump_vectors_' + nom+'.svg'
     #plt.savefig(string_name_file,  bbox_inches = 'tight')
+
+def plot_2radius_vectors(par, lim, burners_nums, jumpVectors, nom):
+
+    #fig, ax = plt.subplots()
+    ax = plt.figure().gca()
+
+    ax.set_ylabel("Maximum Range")
+    ax.set_xlabel(r"HFG Number ($n_b$)")
+
+
+    ax.xaxis.set_major_locator(MaxNLocator(integer=True))   
+
+    #plt.plot(burners_nums, jumpVectors.T[0], ls = '--', color="magenta", alpha = 0.5)
+    plt.plot(burners_nums, jumpVectors.T[0], 'o', color="brown", alpha = 0.5, markersize=8, label = r'Tidal deposition: $S_d = $'+ format(lim.medium_tidal_deluge, '.2f'))
+    #plt.plot(burners_nums, jumpVectors.T[1], ls = '-.', color="magenta", label = r'$S_d = $'+ format(lim.high_tidal_deluge, '.2f'))
+    plt.plot(burners_nums, jumpVectors.T[1], '*', color="brown",  markersize=8, label = r'Tidal deposition: $S_d = $'+ format(lim.high_tidal_deluge, '.2f'))
+    plt.legend(frameon = False)
+       
+    string_name_file = './' + par.plots_dir + '2range_vectors_' + nom+'.png'
+    plt.savefig(string_name_file,  bbox_inches = 'tight')
+    #string_name_file = './' + par.plots_dir + '2jump_vectors_' + nom+'.svg'
+    #plt.savefig(string_name_file,  bbox_inches = 'tight')
+
 
 def plot_envelope_2jumps_vectors(par, lim, mean_values, min_values, max_values , nom):
     
@@ -507,55 +610,7 @@ def plot_envelope_2jumps_vectors(par, lim, mean_values, min_values, max_values ,
     string_name_file = './' + par.plots_dir + '2jump_vectors_dist' + nom+'.svg'
     plt.savefig(string_name_file,  bbox_inches = 'tight')
 
-def plot_2radius_vectors(par, lim, burners_nums, jumpVectors, nom):
 
-    #fig, ax = plt.subplots()
-    ax = plt.figure().gca()
-
-    ax.set_ylabel("Maximum Range")
-    ax.set_xlabel(r"HFG Number ($n_b$)")
-
-
-    ax.xaxis.set_major_locator(MaxNLocator(integer=True))   
-
-    #plt.plot(burners_nums, jumpVectors.T[0], ls = '--', color="magenta", alpha = 0.5)
-    plt.plot(burners_nums, jumpVectors.T[0], 'o', color="brown", alpha = 0.5, markersize=8, label = r'Tidal deposition: $S_d = $'+ format(lim.medium_tidal_deluge, '.2f'))
-    #plt.plot(burners_nums, jumpVectors.T[1], ls = '-.', color="magenta", label = r'$S_d = $'+ format(lim.high_tidal_deluge, '.2f'))
-    plt.plot(burners_nums, jumpVectors.T[1], '*', color="brown",  markersize=8, label = r'Tidal deposition: $S_d = $'+ format(lim.high_tidal_deluge, '.2f'))
-    plt.legend(frameon = False)
-       
-    string_name_file = './' + par.plots_dir + '2range_vectors_' + nom+'.png'
-    plt.savefig(string_name_file,  bbox_inches = 'tight')
-    #string_name_file = './' + par.plots_dir + '2jump_vectors_' + nom+'.svg'
-    #plt.savefig(string_name_file,  bbox_inches = 'tight')
-
-def plot_dist_2radius_vectors(par, lim, mean_values, std_dev, nom):
-    
-    # Create a figure and axes
-    fs = 16
-    fig, ax = plt.subplots(figsize=(8, 6))
-
-
-    # Plot the ±1 sigma envelope and the mean
-    x = np.arange(lim.min_consumers, lim.max_consumers, lim.con_step)
-    lower_bound = np.ones(len(x)) * par.radius
-    
-    ax.fill_between(x, lower_bound, mean_values[0] + std_dev[0] , color="brown", alpha = 0.5, linewidth=0.0)
-    ax.plot(x, mean_values[0], lw = 2.5, color="brown",label = r'Tidal deposition: $S_d = $'+ format(lim.medium_tidal_deluge, '.2f'))
-
-    ax.fill_between(x, lower_bound,  mean_values[1] + std_dev[1], color="olive", alpha = 0.5, linewidth=0.0)
-    ax.plot(x, mean_values[1], lw = 2.5, color="olive",label = r'Tidal deposition: $S_d = $'+ format(lim.high_tidal_deluge, '.2f'))
-
-    # Add labels, legend, and title
-    ax.set_ylabel("Maximum Range Distribution", fontsize=fs)
-    ax.set_xlabel(r"HFG Number ($n_b$)", fontsize=fs)
-    #ax.set_title('Mean and ±1 Sigma Envelope of Arrays')
-    ax.legend(frameon=False)
-
-    string_name_file = './' + par.plots_dir + '2range_vectors_dist' + nom+'.png'
-    plt.savefig(string_name_file,  bbox_inches = 'tight')
-    #string_name_file = './' + par.plots_dir + '2jump_vectors_' + nom+'.svg'
-    #plt.savefig(string_name_file,  bbox_inches = 'tight')
 
 def plot_envelope_2radius_vectors(par, lim, mean_values, min_values, max_values , nom):
     

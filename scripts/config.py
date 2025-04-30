@@ -13,7 +13,7 @@ class par:
 
     '''configuration of the simulation'''
     length = 44#length of the land area in cells
-    time = 366#max time 
+    time = 66#max time 
     runs = 33
     t_step_lenth = 0.5 # lenth of temporal steps
 

@@ -99,28 +99,9 @@ def run_the_grid(par, consumers_parameter, change_par, which_par):# productivity
             sea_consumption_matrix[i,k] = s
             land_consumption_matrix[i,k] = l
             movements[i,k] = m
-            radius = r
+            radius[i,k] = r
     
     return sea_consumption_matrix, land_consumption_matrix, movements, radius
-def run_two_values(par, consumers_parameter, values, which_par):# productivity_parameter
-
-    sea_consumption_vectors  = np.zeros( (len(consumers_parameter), 2  ) ) 
-    land_consumption_vectors  = np.zeros( (len(consumers_parameter), 2  ) ) 
-    movements_vectors = np.zeros( (len(consumers_parameter), 2 ) ) 
-    radius_vectors = np.zeros( (len(consumers_parameter), 2 ) )
-
-    for i, c in enumerate(consumers_parameter):
-        
-        for k, v in enumerate(values[1:]):
-            par.land_productivity = values[0]
-            l, s, m, r = call_model( par, c, v, which_par)
-            #print ('we are in', i, k, c, v, 'and we got ', m)
-            sea_consumption_vectors[i,k] = s
-            land_consumption_vectors[i,k] = l
-            movements_vectors[i,k] = m
-            radius_vectors[i,k] = r
-    
-    return sea_consumption_vectors, land_consumption_vectors, movements_vectors, radius_vectors
 
 def run_one_value(par, value, consumers_parameter, which_par):# productivity_parameter
 
@@ -140,42 +121,6 @@ def run_one_value(par, value, consumers_parameter, which_par):# productivity_par
     
     return movements_vectors, radius_vectors
 
-def vector_runs(par, consumers_parameter, low_land_mediumNhigh_sea):# productivity_parameter
-    
-    vector_jumps_runs = []
-    vector_radius_runs = []
-    runs = par.runs
-
-    for i in range(runs):
-        print ('\n run number', i, '\n')
-        vectors_sea_consumption, vectors_land_consumption, vectors_jumps, vectors_radius =\
-          run_two_values(par, consumers_parameter, low_land_mediumNhigh_sea, 'tidal_deluge')
-        vector_jumps_runs.append(vectors_jumps)
-        vector_radius_runs.append(vectors_radius)
-
-    jumps = np.zeros((2, runs, len(consumers_parameter)))
-    ranges = np.zeros((2, runs,  len(consumers_parameter)))
-    mean_range_values = np.zeros((2, len(consumers_parameter)))
-    std_dev_ranges = np.zeros((2, len(consumers_parameter)))
-
-    # Convert to a 2D NumPy array
-    vector_radius_runs =  np.reshape(vector_radius_runs, (2, runs,  len(consumers_parameter)) )
-   
-    #jumps[0] = np.array(vector_jumps_runs.T[0])
-    #jumps[1] = np.array(vector_jumps_runs.T[1])
-
-    ranges[0] = np.array(vector_radius_runs)[0]
-    ranges[1] = np.array(vector_radius_runs)[1]
-
-
-    # Calculate the mean and standard deviation
-    mean_range_values[0] = np.mean(ranges[0], axis=0)
-    mean_range_values[1] = np.mean(ranges[1], axis=0)
-    print ('mean_range_= values', mean_range_values[0])
-    std_dev_ranges[0] = np.std(ranges[0], axis=0)
-    std_dev_ranges[1] = np.std(ranges[1], axis=0)
-
-    return  mean_range_values, std_dev_ranges
 
 def one_vector_runs(par, lim, value):# productivity_parameter
     
@@ -221,28 +166,21 @@ def main():
     lim = cfg.limits()
     par = cfg.par()
     
-    #consumers_parameter, change_par  = generate_grid(lim, which_par)
-    #matrix_sea_consumption, matrix_land_consumption, matrix_jumps, matrix_radius = run_the_grid(par, consumers_parameter, change_par, which_par)
+    consumers_parameter, change_par  = generate_grid(lim, which_par)
+    matrix_sea_consumption, matrix_land_consumption, matrix_jumps, matrix_radius = run_the_grid(par, consumers_parameter, change_par, which_par)
     #pf.plot_sea_resources_used(par, lim, matrix_sea_consumption, name, which_par)
     #pf.plot_land_resources_used(par, lim, matrix_land_consumption,  name, which_par)
     #pf.plot_jumps_matrix(par, lim, matrix_jumps, name, which_par)
-    #Mats = [matrix_sea_consumption, matrix_land_consumption, matrix_jumps, matrix_radius]
+    Mats = [matrix_sea_consumption, matrix_land_consumption, matrix_jumps, matrix_radius]
     #pf.tri_plotSeaLandJumps(par, lim, Mats, name, which_par)
-
-    #consumers_parameter, low_land_mediumNhigh_sea = settings_mobility_seaFuels(par, lim)
-    #vectors_sea_consumption, vectors_land_consumption, vectors_jumps, vectors_radius =\
-    #      run_two_values(par, consumers_parameter, low_land_mediumNhigh_sea, 'tidal_deluge')
-          
-    #pf.plot_2jumps_vectors(par, lim, consumers_parameter, vectors_jumps, name)
-    #pf.plot_2radius_vectors(par, lim, consumers_parameter, vectors_radius, name)
-
-    #mean_range_values, std_dev_ranges = vector_runs(par, consumers_parameter, low_land_mediumNhigh_sea)
+    pf.quad_plotSeaLandJumps(par, lim, Mats, name, which_par) 
     
-    jDic1, Rdic1 = one_vector_runs(par, lim, lim.scarce_land_prod)
-    jDic2, Rdic2 = one_vector_runs(par, lim, lim.medium_tidal_deluge)
+    #jDic1, Rdic1 = one_vector_runs(par, lim, lim.scarce_land_prod)
+    #jDic2, Rdic2 = one_vector_runs(par, lim, lim.medium_tidal_deluge)
+    #pf.plot_2jumps_vectors(par, lim, consumers_parameter, vectors_jumps, name)
     #pf.plot_dist_2radius_vectors(par, lim, [ meanRanges1,  meanRanges2], [stdRanges1, stdRanges2], name)
-    pf.plot_envelope_2jumps_vectors(par, lim, [ jDic1['mean'], jDic2['mean'] ], [jDic1['min'], jDic2['min']], [jDic1['max'], jDic2['max']], name)
-    pf.plot_envelope_2radius_vectors(par, lim, [ Rdic1['mean'], Rdic2['mean'] ], [Rdic1['min'], Rdic2['min']], [Rdic1['max'], Rdic2['max']], name)
+    #pf.plot_envelope_2jumps_vectors(par, lim, [ jDic1['mean'], jDic2['mean'] ], [jDic1['min'], jDic2['min']], [jDic1['max'], jDic2['max']], name)
+    #pf.plot_envelope_2radius_vectors(par, lim, [ Rdic1['mean'], Rdic2['mean'] ], [Rdic1['min'], Rdic2['min']], [Rdic1['max'], Rdic2['max']], name)
 
     print ('\n time to run all this stuff', str(datetime.timedelta(seconds = (time.perf_counter() - start))), '\n')
     
