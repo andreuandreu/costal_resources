@@ -89,7 +89,7 @@ def call_model(par, consumers_number,  chang_par, which_par):#land_productivity 
     #sim = mc.constants()
 
     #high_land, high_sea, land_vector, sea_vector = mc.create_n_inisialise_landscapes(par)
-        
+    par = cfg.par()
     par.n_consumers = consumers_number
     
     if which_par == 'land_productivity':
@@ -110,9 +110,10 @@ def call_model(par, consumers_number,  chang_par, which_par):#land_productivity 
     
     return norm_burned_land, norm_burned_sea, norm_movements, norm_rad
 
-def call_models(par, chang_pars, which_pars):#land_productivity ):
+def call_models(chang_pars, which_pars):#land_productivity ):
     
     for c, w in zip(chang_pars, which_pars):
+        par = cfg.par()
         if w == 'land_productivity':
             par.land_productivity = c
         elif w == 'high_land':
@@ -134,17 +135,18 @@ def call_models(par, chang_pars, which_pars):#land_productivity ):
     return norm_burned_land, norm_burned_sea, norm_movements, norm_rad
 
 
-def run_the_grids(par, change_pars, which_pars):
+def run_the_grids(change_pars, which_pars):
 
     sea_consumption_matrix  = np.zeros( (len(change_pars[0]), len(change_pars[1])  ) ) 
     land_consumption_matrix  = np.zeros( (len(change_pars[0]), len(change_pars[1])  ) ) 
     movements = np.zeros((len(change_pars[0]), len(change_pars[1])  )) 
     radius = np.zeros((len(change_pars[0]), len(change_pars[1])  ))
     
+    
     for j, c1 in enumerate(change_pars[0]):
-        #print ('we are in gridssss', j, c1) 
+        print ('we are in gridssss', j, c1) 
         for k, c2 in enumerate(change_pars[1]):
-            l, s, m, r = call_models( par, [c1, c2], which_pars)
+            l, s, m, r = call_models( [c1, c2], which_pars)
             sea_consumption_matrix[j,k] = s
             land_consumption_matrix[j,k] = l
             movements[j,k] = m
@@ -250,7 +252,7 @@ def run_n_save_quadMats(lim, par, name, which_pars):
 
     change_pars  = generate_grids(lim, which_pars)
     matrix_sea_consumption, matrix_land_consumption, matrix_jumps, matrix_radius =\
-          run_the_grids(par, change_pars, which_pars)
+          run_the_grids(change_pars, which_pars)
     Mats = [matrix_sea_consumption, matrix_land_consumption, matrix_jumps, matrix_radius/par.length]
     
     save_name = name_files(par, lim, which_pars)
@@ -269,11 +271,7 @@ def run_n_save_all_pairs(lim, par, name):
         run_n_save_quadMats(lim, par, name, list(pair))
 
 
-def load_n_plot_quadMats(par, lim, name, which_pars):
-    save_name = name_files(par, lim, which_pars)
-    Mats = np.load(par.data_dir + name + '_' + save_name, allow_pickle=True)
-    
-    pf.quad_plotSeaLandJumps(par, lim, Mats, name, which_pars[1])
+
     
 #python scripts/resource_movement_grids.py name tidal_deluge
 def main():
@@ -281,7 +279,6 @@ def main():
     start  = time.perf_counter() 
 
     name = sys.argv[1]
-    which_par = sys.argv[2]
 
     lim = cfg.limits()
     par = cfg.par()
@@ -289,17 +286,24 @@ def main():
     if not os.path.exists(par.plots_dir):
         os.makedirs(par.plots_dir)
     
-    #consumers_parameter, change_par  = generate_grid(lim, which_par)
-    #matrix_sea_consumption, matrix_land_consumption, matrix_jumps, matrix_radius = run_the_grid(par, consumers_parameter, change_par, which_par)
-    #Mats = [matrix_sea_consumption, matrix_land_consumption, matrix_jumps, matrix_radius/par.length]
-    #pf.quad_plotSeaLandJumps(par, lim, Mats, name, which_par)
+    consumers_parameter, change_par  = generate_grid(lim, par.which_par)
+    matrix_sea_consumption, matrix_land_consumption, matrix_jumps, matrix_radius = run_the_grid(par, consumers_parameter, change_par, par.which_par)
+    Mats = [matrix_sea_consumption, matrix_land_consumption, matrix_jumps, matrix_radius/par.length]
+    pf.quad_plotSeaLandJumps(par, lim, Mats, name, par.which_par)
+    pf.plot_land_resources_used(par, lim, Mats[1], name, par.which_par)
     
-    which_pars = ['tidal_deluge', 'high_sea' ]#
-    #run_n_save_quadMats(lim, par, name, which_pars)
+    which_pars = ['burners_number', 'high_land' ]#
+    run_n_save_quadMats(lim, par, name, which_pars)
     #run_n_save_all_pairs(lim, par, name)
-    #load_n_plot_quadMats(par, lim, name, which_pars)
+    save_name = name_files(par, lim, which_pars)
+    Mats = np.load(par.data_dir + name + '_' + save_name, allow_pickle=True)
+    pf.quad_plotSeaLandJumps(par, lim, Mats, name, par.which_par)
+   
+    #pf.quad_plotSeaLandJumps(par, lim, Mats, name, which_pars[1])
 
-    tp.triangle_plotSeaLandJumps(par, lim, name, 'MF')
+    
+
+    tp.triangle_plotSeaLandJumps(par, lim, name, 'TF')
     
     ##jDic1, Rdic1 = one_vector_runs(par, lim, lim.medium_tidal_deluge)
     ##jDic2, Rdic2 = one_vector_runs(par, lim, lim.high_tidal_deluge)

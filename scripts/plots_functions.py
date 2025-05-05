@@ -249,13 +249,13 @@ def prerpare_plot(ax, lim, M, which_par):
         ax.set_xlabel("Land Productivity $L_{p}$")
         x =  np.arange(lim.min_land_prod, lim.max_land_prod, lim.prod_step)
     elif which_par == 'high_land':
-        ax.set_xlabel("Maximum Land $L^{max}$")
+        ax.set_xlabel("Highest Land $L^{h}$")
         x =  np.arange(lim.high_land_min, lim.high_land_max, lim.Lhigh_step)
     elif which_par == 'tidal_deluge': 
         ax.set_xlabel("Tidal Deposition $S_{d}$")
         x =  np.arange(lim.min_tidal_deluge, lim.max_tidal_deluge, lim.tidal_deluge_step)
     elif which_par == 'high_sea':    
-        ax.set_xlabel("Maximum Sea $S^{max}$")
+        ax.set_xlabel("Highest Sea $S^{h}$")
         x =  np.arange(lim.high_sea_min, lim.high_sea_max, lim.high_sea_step)
     
     max_matrice = max(map(max, M))
@@ -286,7 +286,7 @@ def prerpare_plot(ax, lim, M, which_par):
     #ticks_y = ticker.FuncFormatter(lambda y, pos: '{0:.1f}'.format(y))
     #ax.yaxis.set_major_formatter(ticks_y)
 
-    return max_matrice, min_matrice, x_positions, x_labels, y_positions, y_labels
+    return ax, max_matrice, min_matrice, x_positions, x_labels, y_positions, y_labels
 
 
 def prerpare_TriPlot(ax, lim, M, which_par, num):
@@ -298,11 +298,11 @@ def prerpare_TriPlot(ax, lim, M, which_par, num):
     if which_par == 'land_productivity' and (num == 0 or num == 2):
         ax.set_xlabel("Land Productivity $L_{p}$", fontsize=fs)
     elif which_par == 'high_land' and (num == 0 or num == 2):
-        ax.set_xlabel("Maximum Land $L^{max}$" , fontsize=fs)
+        ax.set_xlabel("Highest Land $L^{h}$" , fontsize=fs)
     elif which_par == 'tidal_deluge' and (num == 0 or num == 2): 
         ax.set_xlabel("Tidal Deposition $S_{d}$", fontsize=fs)
     elif which_par == 'high_sea' and (num == 0 or num == 2):    
-        ax.set_xlabel("Maximum Sea $S^{max}$" , fontsize=fs)
+        ax.set_xlabel("Highest Sea $S^{h}$" , fontsize=fs)
 
     if which_par == 'land_productivity':
         x =  np.arange(lim.min_land_prod, lim.max_land_prod, lim.prod_step)
@@ -538,16 +538,16 @@ def quad_plotSeaLandJumps(par, lim, Mats, nom, which_par):
     if which_par == 'land_productivity':
         fig.text(v, h, "Land Productivity $L_{p}$", ha='center', va='center', fontsize=fs)
     elif which_par == 'high_land':
-        fig.text(v, h, "Maximum Land $L^{max}$", ha='center', va='center',  fontsize=fs)
+        fig.text(v, h, "Highest Land $L^{h}$", ha='center', va='center',  fontsize=fs)
     elif which_par == 'tidal_deluge': 
         fig.text(v, h, "Tidal Deposition $S_{d}$", ha='center', va='center',  fontsize=fs)
     elif which_par == 'high_sea':    
-        fig.text(v, h, "Maximum Sea $S^{max}$", ha='center', va='center',  fontsize=fs)
+        fig.text(v, h, "Highest Sea $S^{h}$", ha='center', va='center',  fontsize=fs)
     
     fig.text(0.11, 0.88, "MF",  fontsize=fs+2, verticalalignment='top', horizontalalignment='left')
     fig.text(0.91, 0.88, "TF",  fontsize=fs+2, verticalalignment='top', horizontalalignment='right')
     fig.text(0.09, 0.11, "mov",  fontsize=fs+2, verticalalignment='bottom', horizontalalignment='left')
-    fig.text(0.90, 0.11, "ran",  fontsize=fs+2, verticalalignment='bottom', horizontalalignment='right')
+    fig.text(0.92, 0.11, "ran",  fontsize=fs+2, verticalalignment='bottom', horizontalalignment='right')
 
     # Adjust layout and show the plot
     fig.subplots_adjust(wspace=0, hspace=0)

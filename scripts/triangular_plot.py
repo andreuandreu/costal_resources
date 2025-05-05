@@ -8,20 +8,87 @@ import matplotlib.cm as cm
 import resource_movement_grids as rmg
 import itertools
 
-def prepare_gridPlot(ax, lim, M, which_par):
+def prepare_gridPlot(ax, lim, which_pars, i, j, ii):
 
-    max_matrice = max(map(max, M))
-    min_matrice = min(map(min, M))
-  
-    '''
-    if which_par == 'land_productivity':
+
+    if which_pars[0] == 'land_productivity':
+        y =  np.arange(lim.min_land_prod, lim.max_land_prod, lim.prod_step)
+        
+        ny = y.shape[0]
+        n_ylabels = len(y)-1
+        step_y = int(ny / (n_ylabels - 1))
+        y_positions = np.arange(0, ny, step_y )
+        float_formatter = "{:.2f}".format
+        np.set_printoptions(formatter={'float_kind':float_formatter})
+        y_labels = y[::step_y]
+        for i,yy in enumerate(y):
+            y_labels[i] = "{:.2f}".format(yy)
+
+    elif which_pars[0] == 'high_land':
+        y =  np.arange(lim.high_land_min, lim.high_land_max, lim.Lhigh_step)
+
+        ny = y.shape[0]
+        n_ylabels = len(y)-1
+        step_y = int(ny / (n_ylabels - 1))
+        y_positions = np.arange(0, ny, step_y )
+        y_labels = y[::step_y]
+
+    elif which_pars[0] == 'tidal_deluge': 
+        y =  np.arange(lim.min_tidal_deluge, lim.max_tidal_deluge, lim.tidal_deluge_step)
+
+        ny = y.shape[0]
+        n_ylabels = len(y)-1
+        step_y = int(ny / (n_ylabels - 1))
+        y_positions = np.arange(0, ny, step_y )
+        float_formatter = "{:.2f}".format
+        np.set_printoptions(formatter={'float_kind':float_formatter})
+        y_labels = y[::step_y]
+        for i,yy in enumerate(y):
+            y_labels[i] = "{:.2f}".format(yy)
+
+    elif which_pars[0] == 'high_sea':    
+        y =  np.arange(lim.high_sea_min, lim.high_sea_max, lim.high_sea_step)
+
+        ny = y.shape[0]
+        n_ylabels = len(y)-1
+        step_y = int(ny / (n_ylabels - 1))
+        y_positions = np.arange(0, ny, step_y )
+        float_formatter = "{:1f}".format
+        np.set_printoptions(formatter={'float_kind':float_formatter})
+        y_labels = y[::step_y]
+        for i,yy in enumerate(y):
+            y_labels[i] = "{:1f}".format(yy)
+
+    elif which_pars[0] == 'burners_number':
+        y =  np.arange(lim.min_consumers, lim.max_consumers, lim.con_step)
+
+        ny = y.shape[0]
+        n_ylabels = len(y)-1
+        step_y = int(ny / (n_ylabels - 1))
+        y_positions = np.arange(0, ny, step_y )
+        y_labels = y[::step_y]
+
+    else:
+        print('Error: unknown parameter')
+        return
+    
+    ax.yaxis.set_label_position("right")
+    ax.yaxis.tick_right()
+
+    if which_pars[1] == 'land_productivity':
         x =  np.arange(lim.min_land_prod, lim.max_land_prod, lim.prod_step)
-    elif which_par == 'high_land':
+    elif which_pars[1] == 'high_land':
         x =  np.arange(lim.high_land_min, lim.high_land_max, lim.Lhigh_step)
-    elif which_par == 'tidal_deluge': 
+    elif which_pars[1] == 'tidal_deluge': 
         x =  np.arange(lim.min_tidal_deluge, lim.max_tidal_deluge, lim.tidal_deluge_step)
-    elif which_par == 'high_sea':    
+    elif which_pars[1] == 'high_sea':    
         x =  np.arange(lim.high_sea_min, lim.high_sea_max, lim.high_sea_step)
+    elif which_pars[1] == 'burners_number':
+        x =  np.arange(lim.min_consumers, lim.max_consumers, lim.con_step)
+    else:
+        print('Error: unknown parameter')
+        return
+        
 
     nx = x.shape[0]
     n_labels = len(x)-1
@@ -33,21 +100,22 @@ def prepare_gridPlot(ax, lim, M, which_par):
     for i,xx in enumerate(x):
         x_labels[i] = "{:.2f}".format(xx)
 
-    #ticks_y = ticker.FuncFormatter(lambda y, pos: '{0:.1f}'.format(y))
-    #ax.yaxis.set_major_formatter(ticks_y)
+    ax.xaxis.set_label_position("top")
+    ax.xaxis.tick_top()
 
-    y =  np.arange(lim.min_consumers, lim.max_consumers, lim.con_step)
-    ny = y.shape[0]
-    n_ylabels = len(y)-1
-    step_y = int(ny / (n_ylabels - 1))
-    y_positions = np.arange(0, ny, step_y )
-    y_labels = y[::step_y]
-    #ticks_y = ticker.FuncFormatter(lambda y, pos: '{0:.1f}'.format(y))
-    #ax.yaxis.set_major_formatter(ticks_y)
-    '''
 
-    ax.set_xticks([])
-    ax.set_yticks([])
+    ax.set_yticks(y_positions, y_labels)
+    ax.set_xticks(x_positions, x_labels, rotation=90, ha='left')
+    
+
+    if i < 10 :#
+        #ax.set_xticks([])
+        ax.set_yticks([])
+
+    if ii > 3:#
+        print ('iiiii', ii)
+        ax.set_xticks([])
+
    
     return ax
 
@@ -77,7 +145,7 @@ def triangle_plotSeaLandJumps(par, lim, nom, which_tria):
     all_pairs = list(itertools.combinations(par.par_names, 2))
     
     num_matrices = int(len(all_pairs)/2)
-    fig, axes = plt.subplots(num_matrices - 1, num_matrices - 1, figsize=(12, 10), constrained_layout=True)
+    fig, axes = plt.subplots(num_matrices - 1, num_matrices - 1, figsize=(12, 10))#, constrained_layout=True
     
     cmaps = { 'MF':cm.get_cmap('Blues', 5), 'TF':cm.get_cmap('YlGn', 5), 'mov':cm.get_cmap('PuRd', 5) ,'rad':cm.get_cmap('YlOrBr', 5) }
     which_ind = {'MF':0, 'TF':1, 'mov':2, 'rad':3}
@@ -91,19 +159,19 @@ def triangle_plotSeaLandJumps(par, lim, nom, which_tria):
         for j in range(i + 1, num_matrices):
             # Get the current subplot
             ax = axes[i, j - 1] if j - 1 < len(axes[i]) else None
-            print('we are in pair index', ii)
+            
             if ax:
+                print('we are in pair index', ii)
                 # Load data for the parameter pair
                 print ('Loading data for',   all_pairs[ii])
                 which_pars = all_pairs[ii]
                 save_name = rmg.name_files(par, lim, which_pars)
                 Mats = np.load(par.data_dir + nom + '_' + save_name, allow_pickle=True)
                 
-                ax = prepare_gridPlot(ax, lim, Mats[which_ind[which_tria]], which_pars)
+                ax = prepare_gridPlot(ax, lim, which_pars, i, j-1, ii)
                 normalize = matplotlib.colors.Normalize(vmin=min_matrice, vmax=max_matrice)
                 mesh = ax.pcolormesh(Mats[which_ind[which_tria]], cmap = cmaps[which_tria], norm = normalize)
-                fig.colorbar(mesh)
-                #plt.xticks(x_positions, x_labels)
+
             else:
                 # Hide unused subplots
                 axes[i, j - 1].axis('off')
@@ -114,10 +182,18 @@ def triangle_plotSeaLandJumps(par, lim, nom, which_tria):
         for j in range(i):
             axes[i, j].axis('off')
 
+
+
     # Adjust layout and show the plot
+    
+    #fig.subplots_adjust(right=0.8)
+    cbar_ax = fig.add_axes([0.94, 0.15, 0.015, 0.7])
+    fig.colorbar(mesh, cax=cbar_ax)
     fig.subplots_adjust(wspace=0, hspace=0)
+
+
     string_name_file = './' + par.plots_dir + 'Triangle_plot_' + which_tria + nom +'.png'
-    plt.savefig(string_name_file,  bbox_inches = 'tight')
+    plt.savefig(string_name_file,   bbox_inches = 'tight')#,
 
 
 
