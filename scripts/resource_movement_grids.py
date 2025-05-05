@@ -7,6 +7,7 @@ import sys
 import numpy as np
 import scipy
 import os
+import itertools
 
 from random import randint
 from random import choice
@@ -20,6 +21,7 @@ import matplotlib.pyplot as plt
 import config as cfg
 import agregated_sea_consumption_v9 as mc
 import plots_functions as pf
+import triangular_plot as tp
 
 
 
@@ -140,7 +142,7 @@ def run_the_grids(par, change_pars, which_pars):
     radius = np.zeros((len(change_pars[0]), len(change_pars[1])  ))
     
     for j, c1 in enumerate(change_pars[0]):
-        print ('we are in gridssss', j, c1) 
+        #print ('we are in gridssss', j, c1) 
         for k, c2 in enumerate(change_pars[1]):
             l, s, m, r = call_models( par, [c1, c2], which_pars)
             sea_consumption_matrix[j,k] = s
@@ -149,8 +151,6 @@ def run_the_grids(par, change_pars, which_pars):
             radius[j,k] = r
 
     return sea_consumption_matrix, land_consumption_matrix, movements, radius
-
-
 
 def run_the_grid(par, consumers_parameter, change_par, which_par):# productivity_parameter
 
@@ -178,7 +178,6 @@ def run_one_value(par, value, consumers_parameter, which_par):# productivity_par
     movements_vectors = np.zeros( len(consumers_parameter) ) 
     radius_vectors = np.zeros( len(consumers_parameter) )
     
-
     for i, c in enumerate(consumers_parameter):
         
         l, s, m, r = call_model( par, c, value, which_par)
@@ -189,7 +188,6 @@ def run_one_value(par, value, consumers_parameter, which_par):# productivity_par
         radius_vectors[i] = r
     
     return movements_vectors, radius_vectors
-
 
 def one_vector_runs(par, lim, value):# productivity_parameter
     
@@ -225,41 +223,51 @@ def one_vector_runs(par, lim, value):# productivity_parameter
 
 def name_files(par, lim, which_pars):
 
-    change = ''
+    changes = ''
+
     for e in which_pars:
         if e == 'land_productivity':
-            change = 'Lp_ran-' + str(lim.min_land_prod) + '-' + str(lim.max_land_prod)
+            change = 'LpRan-' + str(lim.min_land_prod) + '-' + str(lim.max_land_prod)
         elif e == 'high_land':
-            change = 'Lh_ran-' + str(lim.high_land_min) + '-' + str(lim.high_land_max)
+            change = 'LhRan-' + str(lim.high_land_min) + '-' + str(lim.high_land_max)
         elif e == 'tidal_deluge':  
-            change = 'Sd_ran-' + str(lim.min_tidal_deluge) + '-' + str(lim.max_tidal_deluge)
+            change = 'SdRan-' + str(lim.min_tidal_deluge) + '-' + str(lim.max_tidal_deluge)
         elif e == 'high_sea':
-            change = 'Ld_ran-' + str(lim.high_sea_min) + '-' + str(lim.high_sea_max)
+            change = 'LdRan-' + str(lim.high_sea_min) + '-' + str(lim.high_sea_max)
         elif e == 'burners_number':
-            change = 'nb_ran-' + str(lim.min_consumers) + '-' + str(lim.max_consumers)
+            change = 'nbRan-' + str(lim.min_consumers) + '-' + str(lim.max_consumers)
         else:
             print ('wrong parameter name, names shall be: land_productivity, high_land, tidal_deluge, high_sea')
             print ('you wrote', which_pars)
             print ('exiting')
             sys.exit()
-        change += '_' + change
+        changes +=  change + '_' 
 
-    name = 'quadMat' + '_' + change + 'time' + str(par.time) +  '_len' + str(par.length) + '_R' + str(par.radius) +  '.npy'
+    name = 'quadMat' + '_' + changes + 'time' + str(par.time) +  '_len' + str(par.length) + '_R' + str(par.radius) +  '.npy'
     return name
 
-def run_n_save_quadMats(lim, par, name, which_par):   
+def run_n_save_quadMats(lim, par, name, which_pars):   
 
-    change_pars  = generate_grids(lim, which_par)
-    matrix_sea_consumption, matrix_land_consumption, matrix_jumps, matrix_radius = run_the_grids(par, change_pars, which_par)
+    change_pars  = generate_grids(lim, which_pars)
+    matrix_sea_consumption, matrix_land_consumption, matrix_jumps, matrix_radius =\
+          run_the_grids(par, change_pars, which_pars)
     Mats = [matrix_sea_consumption, matrix_land_consumption, matrix_jumps, matrix_radius/par.length]
     
-    save_name = name_files(par, lim, which_par)
+    save_name = name_files(par, lim, which_pars)
     
     if not os.path.exists(par.data_dir):
         os.makedirs(par.data_dir)
 
     np.save(par.data_dir + name + '_' + save_name, Mats)
     print('file saved in', par.data_dir + '_' + name + '_' + save_name)
+
+def run_n_save_all_pairs(lim, par, name):
+
+    all_pairs = (itertools.combinations(par.par_names, 2))
+    for pair in all_pairs:
+        print ('we are in pair', list(pair))
+        run_n_save_quadMats(lim, par, name, list(pair))
+
 
 def load_n_plot_quadMats(par, lim, name, which_pars):
     save_name = name_files(par, lim, which_pars)
@@ -286,9 +294,12 @@ def main():
     #Mats = [matrix_sea_consumption, matrix_land_consumption, matrix_jumps, matrix_radius/par.length]
     #pf.quad_plotSeaLandJumps(par, lim, Mats, name, which_par)
     
-    which_pars = ['burners_number', 'tidal_deluge']
+    which_pars = ['tidal_deluge', 'high_sea' ]#
     #run_n_save_quadMats(lim, par, name, which_pars)
-    load_n_plot_quadMats(par, lim, name, which_pars)
+    #run_n_save_all_pairs(lim, par, name)
+    #load_n_plot_quadMats(par, lim, name, which_pars)
+
+    tp.triangle_plotSeaLandJumps(par, lim, name, 'MF')
     
     ##jDic1, Rdic1 = one_vector_runs(par, lim, lim.medium_tidal_deluge)
     ##jDic2, Rdic2 = one_vector_runs(par, lim, lim.high_tidal_deluge)

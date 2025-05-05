@@ -28,6 +28,8 @@ class par:
 
     plots_dir = './plots_costal_resources/'
     data_dir = './data_costal_resources/'#'../data_matrices/'
+    par_names = [ 'burners_number', 'tidal_deluge', 'high_sea', 'land_productivity', 'high_land']#
+    
 
 '''limits of the simulation'''
 class limits:
