@@ -131,11 +131,11 @@ def plot_aggregated_resources(par, sea, land, name):
     fig = plt.figure(name)
     ax = fig.add_subplot(111)
 
-    ax.set_xlabel("t")
-    ax.set_ylabel("Fuels Burned")
+    ax.set_xlabel("time steps")
+    ax.set_ylabel("fuels burned per agent & time step")
 
-    ax.plot(sea, alpha = 0.5, label='Seaweed')
-    ax.plot(land, alpha = 0.5, label = 'Land fuel')
+    ax.plot(sea/par.n_consumers, alpha = 0.5, label='Seaweed')
+    ax.plot(land/par.n_consumers, alpha = 0.5, label = 'Land fuel')
 
     t = np.linspace(0, par.time, len(sea))
     t_avg = []
@@ -147,15 +147,15 @@ def plot_aggregated_resources(par, sea, land, name):
         land_avg.append(np.mean(land[ind:ind+rang]))
         t_avg.append(np.mean(t[ind:ind+rang]))
 
-    ax.plot(t_avg, sea_avg, color="blue", linewidth=2.4)
-    ax.plot(t_avg, land_avg, color="orange", linewidth=2.4)
+    ax.plot(t_avg, np.array(sea_avg)/par.n_consumers, color="blue", linewidth=2.4)
+    ax.plot(t_avg, np.array(land_avg)/par.n_consumers, color="orange", linewidth=2.4)
 
 
     plt.legend(frameon = False)
 
     name = name_file(par, name)
-    name_sea = './' + par.plots_dir + 'plot2_time_series/sea_resources_'+ name + '.eps'
-    name_sea = './' + par.plots_dir + 'plot2_time_series/sea_resources_'+ name + '.png'
+    name_sea = './' + par.plots_dir + 'plot2_time_series_'+ name + '.eps'
+    name_sea = './' + par.plots_dir + 'plot2_time_series_'+ name + '.png'
     plt.savefig(name_sea,  bbox_inches = 'tight')
     plt.show()
 
@@ -348,25 +348,7 @@ def prerpare_TriPlot(ax, lim, M, which_par, num):
     return max_matrice, min_matrice
 
 def prepare_QuadPlot(axes, lim, M, which_par, num):
-
-    fs = 16
-
-    if num == 0:
-        ax = axes[0, 0]
-        ax.set_xticks(x_positions, x_labels)
-        ax.set_yticks([])
-    elif num == 1:
-        ax = axes[0, 1]
-        ax.set_xticks([])
-        ax.set_yticks([])
-    elif num == 3:
-        ax = axes[1, 0]
-        ax.set_xticks(x_positions, x_labels)
-        ax.set_yticks(y_positions, y_labels)
-    elif num == 2:
-        ax = axes[1, 1]
-        ax.set_xticks([])
-        ax.set_yticks(y_positions, y_labels)
+  
 
     if which_par == 'land_productivity':
         x =  np.arange(lim.min_land_prod, lim.max_land_prod, lim.prod_step)
@@ -401,6 +383,24 @@ def prepare_QuadPlot(axes, lim, M, which_par, num):
     y_labels = y[::step_y]
     #ticks_y = ticker.FuncFormatter(lambda y, pos: '{0:.1f}'.format(y))
     #ax.yaxis.set_major_formatter(ticks_y)
+   
+    if num == 0:
+        ax = axes[0, 0]
+        ax.set_yticks(y_positions, y_labels)
+        ax.set_xticks([])
+    elif num == 1:
+        ax = axes[0, 1]
+        ax.set_xticks([])
+        ax.set_yticks([])
+    elif num == 2:
+        ax = axes[1, 0]
+        ax.set_xticks(x_positions, x_labels)
+        ax.set_yticks(y_positions, y_labels)
+    elif num == 3:
+        ax = axes[1, 1]
+        ax.set_yticks([])
+        ax.set_xticks(x_positions, x_labels)
+    ax.tick_params(axis='both', which='major', labelsize=11)
 
     return ax, max_matrice, min_matrice
 
@@ -510,30 +510,50 @@ def tri_plotSeaLandJumps(par, lim, Mats, nom, which_par):
 
 
 def quad_plotSeaLandJumps(par, lim, Mats, nom, which_par):
-
+    fs = 14
     # Create the triangular layout
     num_matrices = len(Mats) -1
-    fig, axes = plt.subplots(num_matrices - 1, num_matrices - 1, figsize=(12, 10), constrained_layout=True)
-    
+    fig, axes = plt.subplots(num_matrices - 1, num_matrices - 1, figsize=(13, 10))#, constrained_layout=True
+    #axall = fig.add_subplot(111, frameon=False)
 
-    cmaps = [cm.get_cmap('Blues', 5), cm.get_cmap('OrRd', 5), cm.get_cmap('PuRd', 5) , cm.get_cmap('YlOrBr', 5)]
+    cmaps = [cm.get_cmap('Blues', 5), cm.get_cmap('YlGn', 5), cm.get_cmap('PuRd', 5) ,cm.get_cmap('YlOrBr', 5) ]
     #which_par = ['land_productivity', 'high_land', 'tidal_deluge', 'high_sea']
-    ii = 0
 
     
     # Loop through the triangular arrangement
-    for i in range(num_matrices):
+    for i in range(num_matrices+1):
 
-        max_matrice, min_matrice, ax = prepare_QuadPlot(axes, lim, Mats[i], which_par, i)
+        ax, max_matrice, min_matrice = prepare_QuadPlot(axes, lim, Mats[i], which_par, i)
         normalize = matplotlib.colors.Normalize(vmin=min_matrice, vmax=max_matrice)
-        mesh = ax.pcolormesh(Mats[ii], cmap = cmaps[i], norm = normalize)
-        fig.colorbar(mesh)
-        ii += 1
+        mesh = ax.pcolormesh(Mats[i], cmap = cmaps[i], norm = normalize)
+        if i == 0 or i == 2:
+            fig.colorbar(mesh,location='left')#ax=[ax]
+        else:
+            fig.colorbar(mesh)
 
+    fig.text(0.12, 0.5, r"HFG Number ($n_b$)", ha='center', va='center', fontsize=fs, rotation='vertical')
+    
+    v = 0.5
+    h = 0.06
+    if which_par == 'land_productivity':
+        fig.text(v, h, "Land Productivity $L_{p}$", ha='center', va='center', fontsize=fs)
+    elif which_par == 'high_land':
+        fig.text(v, h, "Maximum Land $L^{max}$", ha='center', va='center',  fontsize=fs)
+    elif which_par == 'tidal_deluge': 
+        fig.text(v, h, "Tidal Deposition $S_{d}$", ha='center', va='center',  fontsize=fs)
+    elif which_par == 'high_sea':    
+        fig.text(v, h, "Maximum Sea $S^{max}$", ha='center', va='center',  fontsize=fs)
+    
+    fig.text(0.11, 0.88, "MF",  fontsize=fs+2, verticalalignment='top', horizontalalignment='left')
+    fig.text(0.91, 0.88, "TF",  fontsize=fs+2, verticalalignment='top', horizontalalignment='right')
+    fig.text(0.09, 0.11, "mov",  fontsize=fs+2, verticalalignment='bottom', horizontalalignment='left')
+    fig.text(0.90, 0.11, "ran",  fontsize=fs+2, verticalalignment='bottom', horizontalalignment='right')
 
     # Adjust layout and show the plot
     fig.subplots_adjust(wspace=0, hspace=0)
-    string_name_file = './' + par.plots_dir + 'Tri_Mat_' + which_par + nom +'.png'
+    #axall.set_xlabel('common xlabel')
+    #axall.set_ylabel('common ylabel')
+    string_name_file = './' + par.plots_dir + 'Quad_' + which_par + nom +'.png'
     plt.savefig(string_name_file,  bbox_inches = 'tight')
 
 
@@ -594,10 +614,10 @@ def plot_envelope_2jumps_vectors(par, lim, mean_values, min_values, max_values ,
     lower_bound = np.ones(len(x)) * par.radius
     
     ax.fill_between(x, min_values[0], max_values[0] , color="magenta", alpha = 0.1, linewidth=0.0)
-    ax.plot(x, mean_values[0], lw = 2.0, ls = '--', color="magenta",label = r'Tidal deposition: $S_d = $'+ format(lim.medium_tidal_deluge, '.2f'))
+    ax.plot(x, mean_values[0], lw = 2.0, ls = '--', color="magenta",label = r'Medium Tidal Deposition: $S_d = $'+ format(lim.medium_tidal_deluge, '.2f'))
 
     ax.fill_between(x, min_values[1], max_values[1] , color="magenta", alpha = 0.3, linewidth=0.0)
-    ax.plot(x, mean_values[1], lw = 2.5,ls = ':', color="magenta",label = r'Tidal deposition: $S_d = $'+ format(lim.high_tidal_deluge, '.2f'))
+    ax.plot(x, mean_values[1], lw = 2.5,ls = ':', color="magenta",label = r'High Tidal Deposition: $S_d = $'+ format(lim.high_tidal_deluge, '.2f'))
 
     # Add labels, legend, and title
     ax.set_ylabel("Average Movements Distribution", fontsize=fs)

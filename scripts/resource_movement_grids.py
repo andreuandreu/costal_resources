@@ -6,6 +6,7 @@ import datetime
 import sys
 import numpy as np
 import scipy
+import os
 
 from random import randint
 from random import choice
@@ -50,6 +51,29 @@ def generate_grid(lim, which_par):
 
     return consumers_parameter, change_par
 
+def generate_grids(lim, which_pars):
+
+    change_pars = [None] * len(which_pars)
+    for i, e in enumerate(which_pars):
+        if e == 'land_productivity':
+            change_pars[i] = np.arange(lim.min_land_prod, lim.max_land_prod, lim.prod_step)
+        elif e == 'high_land':
+            change_pars[i] = np.arange(lim.high_land_min, lim.high_land_max, lim.Lhigh_step)
+        elif e == 'tidal_deluge':
+            change_pars[i] = np.arange(lim.min_tidal_deluge, lim.max_tidal_deluge, lim.tidal_deluge_step)
+        elif e == 'high_sea':
+            change_pars[i] = np.arange(lim.high_sea_min, lim.high_sea_max, lim.high_sea_step)
+        elif e == 'burners_number':
+            change_pars[i] = np.arange(lim.min_consumers, lim.max_consumers, lim.con_step )
+        else:
+            print ('wrong parameter name, names shall be: ')
+            print ('land_productivity, high_land, tidal_deluge, high_sea, burners_number')
+            print ('you wrote', which_pars)
+            print ('exiting')
+            sys.exit()
+
+    return change_pars
+
 def settings_mobility_seaFuels(par, lim):
 
     consumers_parameter = np.arange(lim.min_consumers, int(par.length/2), lim.con_step )
@@ -84,6 +108,50 @@ def call_model(par, consumers_number,  chang_par, which_par):#land_productivity 
     
     return norm_burned_land, norm_burned_sea, norm_movements, norm_rad
 
+def call_models(par, chang_pars, which_pars):#land_productivity ):
+    
+    for c, w in zip(chang_pars, which_pars):
+        if w == 'land_productivity':
+            par.land_productivity = c
+        elif w == 'high_land':
+            par.high_land = c
+        elif w == 'tidal_deluge': 
+            par.tidal_deluge = c
+        elif w == 'high_sea':    
+            par.high_sea = c
+        elif w == 'burners_number':
+            par.n_consumers = c
+        else:
+            print ('wrong parameter name, names shall be: ')
+            print ('land_productivity, high_land, tidal_deluge, high_sea')
+            print ('you wrote', which_pars)
+            print ('exiting')
+            sys.exit()
+
+    norm_burned_land, norm_burned_sea, norm_movements, norm_rad = mc.main(par)
+    return norm_burned_land, norm_burned_sea, norm_movements, norm_rad
+
+
+def run_the_grids(par, change_pars, which_pars):
+
+    sea_consumption_matrix  = np.zeros( (len(change_pars[0]), len(change_pars[1])  ) ) 
+    land_consumption_matrix  = np.zeros( (len(change_pars[0]), len(change_pars[1])  ) ) 
+    movements = np.zeros((len(change_pars[0]), len(change_pars[1])  )) 
+    radius = np.zeros((len(change_pars[0]), len(change_pars[1])  ))
+    
+    for j, c1 in enumerate(change_pars[0]):
+        print ('we are in gridssss', j, c1) 
+        for k, c2 in enumerate(change_pars[1]):
+            l, s, m, r = call_models( par, [c1, c2], which_pars)
+            sea_consumption_matrix[j,k] = s
+            land_consumption_matrix[j,k] = l
+            movements[j,k] = m
+            radius[j,k] = r
+
+    return sea_consumption_matrix, land_consumption_matrix, movements, radius
+
+
+
 def run_the_grid(par, consumers_parameter, change_par, which_par):# productivity_parameter
 
     sea_consumption_matrix  = np.zeros( (len(consumers_parameter), len(change_par)  ) ) 
@@ -109,6 +177,7 @@ def run_one_value(par, value, consumers_parameter, which_par):# productivity_par
     land_consumption_vectors  = np.zeros( len(consumers_parameter) ) 
     movements_vectors = np.zeros( len(consumers_parameter) ) 
     radius_vectors = np.zeros( len(consumers_parameter) )
+    
 
     for i, c in enumerate(consumers_parameter):
         
@@ -154,7 +223,50 @@ def one_vector_runs(par, lim, value):# productivity_parameter
     #jumps_stuff = [mean_jump_values, std_dev_jump, min_values_jump, max_values_jump]
     return  jumps_stuff, ranges_stuff
 
+def name_files(par, lim, which_pars):
 
+    change = ''
+    for e in which_pars:
+        if e == 'land_productivity':
+            change = 'Lp_ran-' + str(lim.min_land_prod) + '-' + str(lim.max_land_prod)
+        elif e == 'high_land':
+            change = 'Lh_ran-' + str(lim.high_land_min) + '-' + str(lim.high_land_max)
+        elif e == 'tidal_deluge':  
+            change = 'Sd_ran-' + str(lim.min_tidal_deluge) + '-' + str(lim.max_tidal_deluge)
+        elif e == 'high_sea':
+            change = 'Ld_ran-' + str(lim.high_sea_min) + '-' + str(lim.high_sea_max)
+        elif e == 'burners_number':
+            change = 'nb_ran-' + str(lim.min_consumers) + '-' + str(lim.max_consumers)
+        else:
+            print ('wrong parameter name, names shall be: land_productivity, high_land, tidal_deluge, high_sea')
+            print ('you wrote', which_pars)
+            print ('exiting')
+            sys.exit()
+        change += '_' + change
+
+    name = 'quadMat' + '_' + change + 'time' + str(par.time) +  '_len' + str(par.length) + '_R' + str(par.radius) +  '.npy'
+    return name
+
+def run_n_save_quadMats(lim, par, name, which_par):   
+
+    change_pars  = generate_grids(lim, which_par)
+    matrix_sea_consumption, matrix_land_consumption, matrix_jumps, matrix_radius = run_the_grids(par, change_pars, which_par)
+    Mats = [matrix_sea_consumption, matrix_land_consumption, matrix_jumps, matrix_radius/par.length]
+    
+    save_name = name_files(par, lim, which_par)
+    
+    if not os.path.exists(par.data_dir):
+        os.makedirs(par.data_dir)
+
+    np.save(par.data_dir + name + '_' + save_name, Mats)
+    print('file saved in', par.data_dir + '_' + name + '_' + save_name)
+
+def load_n_plot_quadMats(par, lim, name, which_pars):
+    save_name = name_files(par, lim, which_pars)
+    Mats = np.load(par.data_dir + name + '_' + save_name, allow_pickle=True)
+    
+    pf.quad_plotSeaLandJumps(par, lim, Mats, name, which_pars[1])
+    
 #python scripts/resource_movement_grids.py name tidal_deluge
 def main():
     
@@ -165,22 +277,25 @@ def main():
 
     lim = cfg.limits()
     par = cfg.par()
+
+    if not os.path.exists(par.plots_dir):
+        os.makedirs(par.plots_dir)
     
-    consumers_parameter, change_par  = generate_grid(lim, which_par)
-    matrix_sea_consumption, matrix_land_consumption, matrix_jumps, matrix_radius = run_the_grid(par, consumers_parameter, change_par, which_par)
-    #pf.plot_sea_resources_used(par, lim, matrix_sea_consumption, name, which_par)
-    #pf.plot_land_resources_used(par, lim, matrix_land_consumption,  name, which_par)
-    #pf.plot_jumps_matrix(par, lim, matrix_jumps, name, which_par)
-    Mats = [matrix_sea_consumption, matrix_land_consumption, matrix_jumps, matrix_radius]
-    #pf.tri_plotSeaLandJumps(par, lim, Mats, name, which_par)
-    pf.quad_plotSeaLandJumps(par, lim, Mats, name, which_par) 
+    #consumers_parameter, change_par  = generate_grid(lim, which_par)
+    #matrix_sea_consumption, matrix_land_consumption, matrix_jumps, matrix_radius = run_the_grid(par, consumers_parameter, change_par, which_par)
+    #Mats = [matrix_sea_consumption, matrix_land_consumption, matrix_jumps, matrix_radius/par.length]
+    #pf.quad_plotSeaLandJumps(par, lim, Mats, name, which_par)
     
-    #jDic1, Rdic1 = one_vector_runs(par, lim, lim.scarce_land_prod)
-    #jDic2, Rdic2 = one_vector_runs(par, lim, lim.medium_tidal_deluge)
+    which_pars = ['burners_number', 'tidal_deluge']
+    #run_n_save_quadMats(lim, par, name, which_pars)
+    load_n_plot_quadMats(par, lim, name, which_pars)
+    
+    ##jDic1, Rdic1 = one_vector_runs(par, lim, lim.medium_tidal_deluge)
+    ##jDic2, Rdic2 = one_vector_runs(par, lim, lim.high_tidal_deluge)
     #pf.plot_2jumps_vectors(par, lim, consumers_parameter, vectors_jumps, name)
     #pf.plot_dist_2radius_vectors(par, lim, [ meanRanges1,  meanRanges2], [stdRanges1, stdRanges2], name)
-    #pf.plot_envelope_2jumps_vectors(par, lim, [ jDic1['mean'], jDic2['mean'] ], [jDic1['min'], jDic2['min']], [jDic1['max'], jDic2['max']], name)
-    #pf.plot_envelope_2radius_vectors(par, lim, [ Rdic1['mean'], Rdic2['mean'] ], [Rdic1['min'], Rdic2['min']], [Rdic1['max'], Rdic2['max']], name)
+    ##pf.plot_envelope_2jumps_vectors(par, lim, [ jDic1['mean'], jDic2['mean'] ], [jDic1['min'], jDic2['min']], [jDic1['max'], jDic2['max']], name)
+    ##pf.plot_envelope_2radius_vectors(par, lim, [ Rdic1['mean'], Rdic2['mean'] ], [Rdic1['min'], Rdic2['min']], [Rdic1['max'], Rdic2['max']], name)
 
     print ('\n time to run all this stuff', str(datetime.timedelta(seconds = (time.perf_counter() - start))), '\n')
     
