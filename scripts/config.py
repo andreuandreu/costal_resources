@@ -3,18 +3,17 @@ import numpy as np
 
 
 class par:
-
     '''variables of the simulation'''
     high_land = 5#30 # maximum amount for the maximum capacity land cell, in burning rate units. 
     high_sea = 5#initial condition on land combustible, in burning rate units. 
     
-    land_productivity = 0.1# constant for the productivity of land, in burning rate units.  
+    land_productivity = 0.05# constant for the productivity of land, in burning rate units.  
     tidal_deluge = 0.33 #amount of recovery of sea fuel, multiplictive factor of intitial conditions 
 
     '''configuration of the simulation'''
     length = 44#length of the land area in cells
-    time = 333#max time 
-    runs = 5
+    time = 566#max time 
+    runs = 33
     t_step_lenth = 0.5 # lenth of temporal steps
 
     burning_rate = 1  #burning rate, this has to be 1 as all the rest will be normalized to these units.
@@ -28,7 +27,7 @@ class par:
 
     plots_dir = './plots_costal_resources/'
     data_dir = './data_costal_resources/'#'../data_matrices/'
-    which_par = 'land_productivity'#'high_land'#'burners_number'#'high_sea'#'tidal_deluge'#'land_productivity'
+    which_par = 'high_land'#'high_land'#'burners_number'#'high_sea'#'tidal_deluge'#'land_productivity'
     par_names = [ 'burners_number', 'tidal_deluge',  'land_productivity', 'high_sea', 'high_land']#
     
 
@@ -40,11 +39,11 @@ class limits:
 
     min_land_prod = 0.01
     max_land_prod = 0.22
-    prod_step = 0.044
+    prod_step = 0.022
 
     high_land_min = 2
     high_land_max = 16
-    Lhigh_step = 2.3
+    Lhigh_step = 1.3
 
     min_tidal_deluge = 0.1
     max_tidal_deluge = 0.4

@@ -9,7 +9,8 @@ import resource_movement_grids as rmg
 import itertools
 
 def prepare_gridPlot(ax, lim, which_pars, i, j, ii):
-
+    
+    fs = 12
 
     if which_pars[0] == 'land_productivity':
         y =  np.arange(lim.min_land_prod, lim.max_land_prod, lim.prod_step)
@@ -24,6 +25,8 @@ def prepare_gridPlot(ax, lim, which_pars, i, j, ii):
         for i,yy in enumerate(y):
             y_labels[i] = "{:.2f}".format(yy)
 
+        ax.set_ylabel("Land Productivity $L_{p}$", rotation=270, labelpad=15, fontsize=fs)
+
     elif which_pars[0] == 'high_land':
         y =  np.arange(lim.high_land_min, lim.high_land_max, lim.Lhigh_step)
 
@@ -32,6 +35,7 @@ def prepare_gridPlot(ax, lim, which_pars, i, j, ii):
         step_y = int(ny / (n_ylabels - 1))
         y_positions = np.arange(0, ny, step_y )
         y_labels = y[::step_y]
+        ax.set_ylabel("Highest Land $L^{h}$", rotation=270, labelpad=15, fontsize=fs)
 
     elif which_pars[0] == 'tidal_deluge': 
         y =  np.arange(lim.min_tidal_deluge, lim.max_tidal_deluge, lim.tidal_deluge_step)
@@ -46,6 +50,8 @@ def prepare_gridPlot(ax, lim, which_pars, i, j, ii):
         for i,yy in enumerate(y):
             y_labels[i] = "{:.2f}".format(yy)
 
+        ax.set_ylabel("Tidal Deposition $S_{d}$", rotation=270, labelpad=15, fontsize=fs)
+
     elif which_pars[0] == 'high_sea':    
         y =  np.arange(lim.high_sea_min, lim.high_sea_max, lim.high_sea_step)
 
@@ -58,6 +64,7 @@ def prepare_gridPlot(ax, lim, which_pars, i, j, ii):
         y_labels = y[::step_y]
         for i,yy in enumerate(y):
             y_labels[i] = "{:1f}".format(yy)
+        ax.set_ylabel("Highest Sea $S^{h}$", rotation=270, labelpad=15, fontsize=fs)
 
     elif which_pars[0] == 'burners_number':
         y =  np.arange(lim.min_consumers, lim.max_consumers, lim.con_step)
@@ -67,6 +74,7 @@ def prepare_gridPlot(ax, lim, which_pars, i, j, ii):
         step_y = int(ny / (n_ylabels - 1))
         y_positions = np.arange(0, ny, step_y )
         y_labels = y[::step_y]
+        ax.set_ylabel("HFG Number $n_b$", rotation=270, labelpad=15, fontsize=fs)
 
     else:
         print('Error: unknown parameter')
@@ -101,6 +109,7 @@ def prepare_gridPlot(ax, lim, which_pars, i, j, ii):
         x_labels[i] = "{:.2f}".format(xx)
 
     ax.xaxis.set_label_position("top")
+    ax.xaxis.set_label_position('top') 
     ax.xaxis.tick_top()
 
 
@@ -108,15 +117,26 @@ def prepare_gridPlot(ax, lim, which_pars, i, j, ii):
     ax.set_xticks(x_positions, x_labels, rotation=90, ha='left')
     
 
-    if i < 10 :#
-        #ax.set_xticks([])
+    if i < 10 :
         ax.set_yticks([])
 
-    if ii > 3:#
-        print ('iiiii', ii)
-        ax.set_xticks([])
 
-   
+    if ii > 3:#
+        ax.set_xticks([])
+    else:
+        if which_pars[1] == "land_productivity":
+            ax.set_xlabel("Land Productivity $L_{p}$", fontsize=fs)
+        
+        elif which_pars[1] == 'high_land':
+            ax.set_xlabel("Highest Land $L^{h}$", fontsize=fs)
+            
+        elif which_pars[1] == 'tidal_deluge':
+            ax.set_xlabel("Tidal Deposition $S_{d}$",  fontsize=fs)
+           
+        elif which_pars[1] == 'high_sea':    
+            ax.set_xlabel("Highest Sea $S^{h}$",  fontsize=fs)
+            
+
     return ax
 
 
@@ -141,14 +161,15 @@ def prepare_minMaxLevels(par, lim, all_pairs, which_ind, nom):
 
 def triangle_plotSeaLandJumps(par, lim, nom, which_tria):
 
+    fs = 14
     # Create the triangular layout
     all_pairs = list(itertools.combinations(par.par_names, 2))
     
     num_matrices = int(len(all_pairs)/2)
     fig, axes = plt.subplots(num_matrices - 1, num_matrices - 1, figsize=(12, 10))#, constrained_layout=True
     
-    cmaps = { 'MF':cm.get_cmap('Blues', 5), 'TF':cm.get_cmap('YlGn', 5), 'mov':cm.get_cmap('PuRd', 5) ,'rad':cm.get_cmap('YlOrBr', 5) }
-    which_ind = {'MF':0, 'TF':1, 'mov':2, 'rad':3}
+    cmaps = { 'MF':cm.get_cmap('Blues', 5), 'TF':cm.get_cmap('YlGn', 5), 'mov':cm.get_cmap('PuRd', 5) ,'ran':cm.get_cmap('YlOrBr', 5) }
+    which_ind = {'MF':0, 'TF':1, 'mov':2, 'ran':3}
 
     max_matrice, min_matrice = prepare_minMaxLevels(par, lim, all_pairs, which_ind[which_tria], nom)
     
@@ -183,11 +204,8 @@ def triangle_plotSeaLandJumps(par, lim, nom, which_tria):
             axes[i, j].axis('off')
 
 
-
     # Adjust layout and show the plot
-    
-    #fig.subplots_adjust(right=0.8)
-    cbar_ax = fig.add_axes([0.94, 0.15, 0.015, 0.7])
+    cbar_ax = fig.add_axes([0.96, 0.15, 0.01, 0.7])
     fig.colorbar(mesh, cax=cbar_ax)
     fig.subplots_adjust(wspace=0, hspace=0)
 
@@ -195,72 +213,3 @@ def triangle_plotSeaLandJumps(par, lim, nom, which_tria):
     string_name_file = './' + par.plots_dir + 'Triangle_plot_' + which_tria + nom +'.png'
     plt.savefig(string_name_file,   bbox_inches = 'tight')#,
 
-
-
-
-
-'''
-
-
-# Directory to save and load .npy files
-data_dir = "./data_matrices"
-os.makedirs(data_dir, exist_ok=True)
-
-# Function to generate and save data as .npy files
-def generate_and_save_data(param1, param2, filename):
-    x = np.linspace(0, 10, 100)
-    y = np.linspace(0, 10, 100)
-    X, Y = np.meshgrid(x, y)
-    Z = np.sin(X * param1) + np.cos(Y * param2)
-    np.save(os.path.join(data_dir, filename), Z)
-    return X, Y, Z
-
-# Function to load data from .npy files
-def load_data(filename):
-    Z = np.load(os.path.join(data_dir, filename))
-    x = np.linspace(0, 10, Z.shape[1])
-    y = np.linspace(0, 10, Z.shape[0])
-    X, Y = np.meshgrid(x, y)
-    return X, Y, Z
-
-# Parameters
-parameters = ['a', 'b', 'c', 'd', 'e']
-num_params = len(parameters)
-
-# Generate and save data for all parameter pairs
-for i in range(num_params - 1):
-    for j in range(i + 1, num_params):
-        filename = f"{parameters[i]}_{parameters[j]}.npy"
-        generate_and_save_data(i + 1, j + 1, filename)
-
-# Create the triangular layout
-fig, axes = plt.subplots(num_params - 1, num_params - 1, figsize=(12, 10), constrained_layout=True)
-
-# Loop through the triangular arrangement
-for i in range(num_params - 1):
-    for j in range(i + 1, num_params):
-        # Get the current subplot
-        ax = axes[i, j - 1] if j - 1 < len(axes[i]) else None
-        if ax:
-            # Load data for the parameter pair
-            filename = f"{parameters[i]}_{parameters[j]}.npy"
-            X, Y, Z = load_data(filename)
-            
-            # Plot the data using pcolormesh
-            mesh = ax.pcolormesh(X, Y, Z, shading='auto', cmap='viridis')
-            ax.set_xlabel(parameters[i])
-            ax.set_ylabel(parameters[j])
-            fig.colorbar(mesh, ax=ax)
-        else:
-            # Hide unused subplots
-            axes[i, j - 1].axis('off')
-
-# Hide empty subplots in the lower triangle
-for i in range(1, num_params - 1):
-    for j in range(i):
-        axes[i, j].axis('off')
-
-# Adjust layout and show the plot
-plt.suptitle("Triangular Multi-Panel Plot with pcolormesh", fontsize=16)
-plt.show()
-'''

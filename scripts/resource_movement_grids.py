@@ -55,6 +55,7 @@ def generate_grid(lim, which_par):
 
 def generate_grids(lim, which_pars):
 
+
     change_pars = [None] * len(which_pars)
     for i, e in enumerate(which_pars):
         if e == 'land_productivity':
@@ -79,17 +80,13 @@ def generate_grids(lim, which_pars):
 def settings_mobility_seaFuels(par, lim):
 
     consumers_parameter = np.arange(lim.min_consumers, int(par.length/2), lim.con_step )
-
     low_land_mediumNhigh_sea = [lim.scarce_land_prod, lim.medium_tidal_deluge, lim.high_tidal_deluge]
 
     return consumers_parameter, low_land_mediumNhigh_sea
 
 
 def call_model(par, consumers_number,  chang_par, which_par):#land_productivity ):
-    #sim = mc.constants()
-
-    #high_land, high_sea, land_vector, sea_vector = mc.create_n_inisialise_landscapes(par)
-    par = cfg.par()
+    
     par.n_consumers = consumers_number
     
     if which_par == 'land_productivity':
@@ -111,9 +108,9 @@ def call_model(par, consumers_number,  chang_par, which_par):#land_productivity 
     return norm_burned_land, norm_burned_sea, norm_movements, norm_rad
 
 def call_models(chang_pars, which_pars):#land_productivity ):
-    
+    par = cfg.par()
     for c, w in zip(chang_pars, which_pars):
-        par = cfg.par()
+
         if w == 'land_productivity':
             par.land_productivity = c
         elif w == 'high_land':
@@ -223,6 +220,16 @@ def one_vector_runs(par, lim, value):# productivity_parameter
     #jumps_stuff = [mean_jump_values, std_dev_jump, min_values_jump, max_values_jump]
     return  jumps_stuff, ranges_stuff
 
+def run_n_plot_jumpNranEnvelopes(par, lim, name):
+
+    jDic1, Rdic1 = one_vector_runs(par, lim, lim.medium_tidal_deluge)
+    jDic2, Rdic2 = one_vector_runs(par, lim, lim.high_tidal_deluge)
+    #pf.plot_2jumps_vectors(par, lim, consumers_parameter, vectors_jumps, name)
+    #pf.plot_dist_2radius_vectors(par, lim, [ meanRanges1,  meanRanges2], [stdRanges1, stdRanges2], name)
+    pf.plot_envelope_2jumps_vectors(par, lim, [ jDic1['mean'], jDic2['mean'] ], [jDic1['min'], jDic2['min']], [jDic1['max'], jDic2['max']], name)
+    pf.plot_envelope_2radius_vectors(par, lim, [ Rdic1['mean'], Rdic2['mean'] ], [Rdic1['min'], Rdic2['min']], [Rdic1['max'], Rdic2['max']], name)
+
+
 def name_files(par, lim, which_pars):
 
     changes = ''
@@ -248,6 +255,15 @@ def name_files(par, lim, which_pars):
     name = 'quadMat' + '_' + changes + 'time' + str(par.time) +  '_len' + str(par.length) + '_R' + str(par.radius) +  '.npy'
     return name
 
+def run_n_plot_quadMat(lim, par, name):
+
+    consumers_parameter, change_par  = generate_grid(lim, par.which_par)
+    matrix_sea_consumption, matrix_land_consumption, matrix_jumps, matrix_radius = run_the_grid(par, consumers_parameter, change_par, par.which_par)
+    Mats = [matrix_sea_consumption, matrix_land_consumption, matrix_jumps, matrix_radius/par.length]
+    pf.quad_plotSeaLandJumps(par, lim, Mats, name, par.which_par)
+    #pf.plot_land_resources_used(par, lim, Mats[1], name, par.which_par)
+    #pf.plot_sea_resources_used(par, lim, Mats[0], name, par.which_par)
+
 def run_n_save_quadMats(lim, par, name, which_pars):   
 
     change_pars  = generate_grids(lim, which_pars)
@@ -257,8 +273,6 @@ def run_n_save_quadMats(lim, par, name, which_pars):
     
     save_name = name_files(par, lim, which_pars)
     
-    if not os.path.exists(par.data_dir):
-        os.makedirs(par.data_dir)
 
     np.save(par.data_dir + name + '_' + save_name, Mats)
     print('file saved in', par.data_dir + '_' + name + '_' + save_name)
@@ -270,14 +284,40 @@ def run_n_save_all_pairs(lim, par, name):
         print ('we are in pair', list(pair))
         run_n_save_quadMats(lim, par, name, list(pair))
 
+def quad_plots(par, lim, name):
 
+    which_pars = ['burners_number', 'tidal_deluge' ]
+    save_name = name_files(par, lim, which_pars)
+    Mats = np.load(par.data_dir + name + '_' + save_name, allow_pickle=True)
+    pf.quad_plotSeaLandJumps(par, lim, Mats, name, which_pars[1])
+
+    which_pars = ['burners_number', 'land_productivity']
+    save_name = name_files(par, lim, which_pars)
+    Mats = np.load(par.data_dir + name + '_' + save_name, allow_pickle=True)
+    pf.quad_plotSeaLandJumps(par, lim, Mats, name, which_pars[1])
+
+    which_pars = ['burners_number', 'high_sea']
+    save_name = name_files(par, lim, which_pars)
+    Mats = np.load(par.data_dir + name + '_' + save_name, allow_pickle=True)
+    pf.quad_plotSeaLandJumps(par, lim, Mats, name, which_pars[1])
+
+    which_pars = ['burners_number', 'high_land']
+    save_name = name_files(par, lim, which_pars)
+    Mats = np.load(par.data_dir + name + '_' + save_name, allow_pickle=True)
+    pf.quad_plotSeaLandJumps(par, lim, Mats, name, which_pars[1])
 
     
-#python scripts/resource_movement_grids.py name tidal_deluge
+def triangle_plots(par, lim, name):
+
+    outputs = ['MF', 'TF', 'mov', 'ran']
+    for e in outputs:
+        tp.triangle_plotSeaLandJumps(par, lim, name, e)
+
+
+#python scripts/resource_movement_grids.py name
 def main():
-    
-    start  = time.perf_counter() 
 
+    start  = time.perf_counter() 
     name = sys.argv[1]
 
     lim = cfg.limits()
@@ -285,33 +325,17 @@ def main():
 
     if not os.path.exists(par.plots_dir):
         os.makedirs(par.plots_dir)
+        run_n_plot_jumpNranEnvelopes(par, lim, name)
     
-    consumers_parameter, change_par  = generate_grid(lim, par.which_par)
-    matrix_sea_consumption, matrix_land_consumption, matrix_jumps, matrix_radius = run_the_grid(par, consumers_parameter, change_par, par.which_par)
-    Mats = [matrix_sea_consumption, matrix_land_consumption, matrix_jumps, matrix_radius/par.length]
-    pf.quad_plotSeaLandJumps(par, lim, Mats, name, par.which_par)
-    pf.plot_land_resources_used(par, lim, Mats[1], name, par.which_par)
-    
-    which_pars = ['burners_number', 'high_land' ]#
-    run_n_save_quadMats(lim, par, name, which_pars)
-    #run_n_save_all_pairs(lim, par, name)
-    save_name = name_files(par, lim, which_pars)
-    Mats = np.load(par.data_dir + name + '_' + save_name, allow_pickle=True)
-    pf.quad_plotSeaLandJumps(par, lim, Mats, name, par.which_par)
-   
-    #pf.quad_plotSeaLandJumps(par, lim, Mats, name, which_pars[1])
+    #run_n_plot_quadMat(lim, par, name)
 
-    
+    if not os.path.exists(par.data_dir):
+        os.makedirs(par.data_dir)
+        run_n_save_all_pairs(lim, par, name)
 
-    tp.triangle_plotSeaLandJumps(par, lim, name, 'TF')
+    quad_plots(par, lim, name)
+    triangle_plots(par, lim, name)
     
-    ##jDic1, Rdic1 = one_vector_runs(par, lim, lim.medium_tidal_deluge)
-    ##jDic2, Rdic2 = one_vector_runs(par, lim, lim.high_tidal_deluge)
-    #pf.plot_2jumps_vectors(par, lim, consumers_parameter, vectors_jumps, name)
-    #pf.plot_dist_2radius_vectors(par, lim, [ meanRanges1,  meanRanges2], [stdRanges1, stdRanges2], name)
-    ##pf.plot_envelope_2jumps_vectors(par, lim, [ jDic1['mean'], jDic2['mean'] ], [jDic1['min'], jDic2['min']], [jDic1['max'], jDic2['max']], name)
-    ##pf.plot_envelope_2radius_vectors(par, lim, [ Rdic1['mean'], Rdic2['mean'] ], [Rdic1['min'], Rdic2['min']], [Rdic1['max'], Rdic2['max']], name)
-
     print ('\n time to run all this stuff', str(datetime.timedelta(seconds = (time.perf_counter() - start))), '\n')
     
     plt.show()
