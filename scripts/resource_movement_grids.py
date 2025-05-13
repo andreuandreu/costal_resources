@@ -314,6 +314,19 @@ def triangle_plots(par, lim, name):
         tp.triangle_plotSeaLandJumps(par, lim, name, e)
 
 
+def generate_tree(path,string):
+    text=''
+    for file in os.listdir(path):
+        rel = path + "/" + file
+        print(rel)
+        if  string in rel.split('/') and os.path.isdir(rel):   
+            text += ' Main folder: ' +file
+            text += generate_tree(rel,string)
+        else:
+            text += ' File in folder: '+file
+    return text
+
+
 #python scripts/resource_movement_grids.py name
 def main():
 
@@ -325,16 +338,17 @@ def main():
 
     if not os.path.exists(par.plots_dir):
         os.makedirs(par.plots_dir)
-        run_n_plot_jumpNranEnvelopes(par, lim, name)
+    run_n_plot_jumpNranEnvelopes(par, lim, name)
     
     #run_n_plot_quadMat(lim, par, name)
 
-    if not os.path.exists(par.data_dir):
-        os.makedirs(par.data_dir)
-        run_n_save_all_pairs(lim, par, name)
+    #if not os.path.exists(par.data_dir):
+    #    os.makedirs(par.data_dir)
+    #    if name not in par.data_dir+'/*':
+    #run_n_save_all_pairs(lim, par, name)
 
-    quad_plots(par, lim, name)
-    triangle_plots(par, lim, name)
+    #quad_plots(par, lim, name)
+    #triangle_plots(par, lim, name)
     
     print ('\n time to run all this stuff', str(datetime.timedelta(seconds = (time.perf_counter() - start))), '\n')
     

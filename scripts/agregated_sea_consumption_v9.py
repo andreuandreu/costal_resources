@@ -116,7 +116,7 @@ def consume(burning, land, sea ):
     else:
         new_land = par.min_land
         #print('consume leftover fuel', '{:2.2f}'.format(land), '{:2.2f}'.format(sea), 0 )
-        return new_land, 0
+        return land, 0
     
 
 def accumulated_burnings(par, land_fuel, sea_fuel):    
